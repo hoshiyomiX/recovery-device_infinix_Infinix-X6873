@@ -1,4 +1,3 @@
-# Common TWRP device tree for Transsion mt6789 devices
 ## TECNO POVA 6 4G (_LI7_)
 ## TWRP / OrangeFox device tree
 

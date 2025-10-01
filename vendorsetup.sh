@@ -37,17 +37,6 @@ else
 	exit 1
 fi
 
-fetch_mt6789_common_repo() {
-	local URL=https://github.com/transsion-mt6789/twrp-device_transsion_mt6789-common.git
-	local common=device/transsion/mt6789-common
-	if [ ! -d $common ]; then
-		echo "Cloning $URL ... to $common"
-		git clone $URL -b fox_12.1-tranos15 $common
-	else
-		echo "Device common repository: \"$common\" found ..."
-	fi
-}
-
 fox_get_target_device() {
 	if [ "$IS_ZSH" -eq 1 ]; then
 		# ZSH implementation
@@ -97,9 +86,6 @@ if [ "$1" = "$FDEVICE" -o "$FOX_BUILD_DEVICE" = "$FDEVICE" ]; then
 	else
 		echo "OK: All patched"
 	fi
-
-	# mt6789-common
-	fetch_mt6789_common_repo
 
 	export FOX_USE_SPECIFIC_MAGISK_ZIP=~/Magisk/Magisk-v28.1.zip
 	export FOX_VIRTUAL_AB_DEVICE=1
