@@ -31,8 +31,8 @@ Works:
 - [X] Flashing
 - [X] MTP
 - [X] Sideload
-- [ ] USB OTG
-- [ ] Vibrator
+- [x] USB OTG
+- [x] Vibrator
 
 ## Building
 ### TWRP, PBRP
