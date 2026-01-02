@@ -231,3 +231,5 @@ tran_perf_util.ko
 nfc_i2c.ko
 tran-proc-bootdevice-mod.ko
 tran_rhi.ko
+adaptive-ts.ko
+focaltech_ft3683g.ko

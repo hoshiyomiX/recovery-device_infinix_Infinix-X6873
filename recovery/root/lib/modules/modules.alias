@@ -1383,3 +1383,5 @@ alias of:N*T*Cmediatek,mt6989-mdpm mtk_mdpm
 alias of:N*T*Cmediatek,mt6989-mdpmC* mtk_mdpm
 alias of:N*T*Cmediatek,mt6878-mdpm mtk_mdpm
 alias of:N*T*Cmediatek,mt6878-mdpmC* mtk_mdpm
+alias of:N*T*Cfocaltech,fts focaltech_ft3683g
+alias of:N*T*Cfocaltech,ftsC* focaltech_ft3683g
