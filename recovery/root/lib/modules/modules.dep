@@ -241,5 +241,5 @@
 /lib/modules/drm_display_helper.ko:
 /lib/modules/mtk-mmdvfs-ftrace.ko:
 /lib/modules/mtk_mdpm.ko:
-/lib/modules/adaptive-ts.ko: /lib/modules/tnek.ko /lib/modules/transsion_tranlog.ko
-/lib/modules/focaltech_ft3683g.ko: /lib/modules/adaptive-ts.ko /lib/modules/tnek.ko /lib/modules/transsion_tranlog.ko
+/lib/modules/adaptive-ts.ko: /lib/modules/mtk_disp_notify.ko /lib/modules/tnek.ko /lib/modules/transsion_tranlog.ko
+/lib/modules/focaltech_ft3683g.ko: /lib/modules/adaptive-ts.ko /lib/modules/mtk_disp_notify.ko /lib/modules/tnek.ko /lib/modules/transsion_tranlog.ko
