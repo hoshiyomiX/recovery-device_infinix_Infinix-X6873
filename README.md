@@ -1,50 +1,51 @@
-## ADVAN X1 (_6781_)
+## Infinix GT 30 Pro (_X6873_)
 ## Recovery device tree (TWRP, PBRP, OrangeFox, SHRP)
 
 ## Device specifications
 
-Device                  | ADVAN X1
+Device                  | Infinix GT 30 Pro
 -----------------------:|:-----------------------------------------
-SoC                     | Mediatek Helio G100 Ultimate (6 nm)
-CPU                     | Octa-core (2x2.2 GHz Cortex-A76 & 6x2.0 GHz Cortex-A55)
-GPU                     | Mali-G57 MC2
-Memory                  | 8 GB RAM
-Storage                 | 128 GB (UFS 2.2)
-MicroSD                 | microSDXC (dedicated slot)
-Shipped Android Version | 14.0
-Battery                 | Non-removable 5000 mAh
-Display                 | 1080 x 2460 pixels (~396 ppi density), 6.78 inches, 120hz
-Camera                  | 64 MP Sony-IMX782; 5 MP (front)
+SoC                     | Mediatek Dimensity 8350 Ultimate (4 nm)
+CPU                     | Octa-core (1x3.35 GHz Cortex-A715 & 3x3.20 GHz Cortex-A715 & 4x2.20 GHz Cortex-A510)
+GPU                     | Mali G615-MC6
+Memory                  | 8 / 12 GB RAM
+Storage                 | 256 / 512 GB (UFS 4.0)
+MicroSD                 | None
+Shipped Android Version | 15.0
+Battery                 | Non-removable 5500 mAh
+Display                 | 1224 x 2720 pixels (~440 ppi density), AMOLED 6.78", 144Hz
+Camera                  | 108 MP (wide), 8 MP (ultrawide); 13 MP (front)
 
 ## Device picture
 
-![ ADVAN X1 ](https://i0.wp.com/advandigital.com/wp-content/uploads/2025/07/Background.png?w=752&ssl=1 "ADVAN X1")
+![ Infinix GT 30 Pro ](https://fdn2.gsmarena.com/vv/pics/infinix/infinix-gt30-pro-1.jpg "Infinix GT 30 Pro")
 
 ## Features
 
 Works:
 
-- [X] ADB
-- [X] Decryption
 - [X] Display
+- [X] Touch
+- [X] ADB
 - [X] Fasbootd
 - [X] Flashing
 - [X] MTP
 - [X] Sideload
-- [x] USB OTG
-- [x] Vibrator
+- [ ] Decryption
+- [ ] USB OTG
+- [ ] Vibrator
 
 ## Building
 ### TWRP, PBRP
 _Lunch_ command :
 
 ```
-lunch twrp_ADVAN_X1-eng && mka vendorbootimage
+lunch twrp_X6873-eng && mka vendorbootimage
 ```
 
 ### SHRP, OrangeFox
 _Lunch_ command :
 
 ```
-lunch twrp_ADVAN_X1-eng && mka adbd vendorbootimage
+lunch twrp_X6873-eng && mka adbd vendorbootimage
 ```
