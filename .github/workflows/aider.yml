@@ -1,0 +1,111 @@
+name: AI Agent (Aider + Auto Cleanup & Emoji)
+
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  ai-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '/ai')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '/ai'))
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Aider
+        run: pip install aider-chat
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "AI Agent"
+          git config --global user.email "ai-agent[bot]@users.noreply.github.com"
+
+      - name: Cleanup Old Junk Branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Menghapus branch 'ai/fix-*' lama..."
+          # Ambil list remote branch yang cocok dengan pattern
+          OLD_BRANCHES=$(git ls-remote --heads origin "ai/fix-*" | awk '{print $2}' | sed 's|refs/heads/||')
+          
+          if [ -n "$OLD_BRANCHES" ]; then
+            for BRANCH in $OLD_BRANCHES; do
+              echo "Menghapus branch: $BRANCH"
+              git push origin --delete "$BRANCH" || true
+            done
+          else
+            echo "Tidak ada branch lama yang perlu dibersihkan."
+          fi
+
+      - name: Run Aider (Z.ai GLM-4.7-Flash)
+        env:
+          OPENAI_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
+          OPENAI_API_BASE: https://api.z.ai/api/paas/v4/
+          GH_TOKEN: ${{ github.token }}
+          
+          PROMPT: |
+            ${{ github.event.comment.body }}
+            ${{ github.event.issue.body }}
+        run: |
+          BRANCH_NAME="ai/fix-$(date +%s)"
+          git checkout -b $BRANCH_NAME
+          CLEANED_PROMPT=$(echo "$PROMPT" | sed 's/^\/ai //')
+
+          aider --model openai/glm-4.7-flash \
+                --editor-model openai/glm-4.7-flash \
+                --message="$CLEANED_PROMPT" \
+                --commit-prompt="Generate a concise commit message" \
+                --yes \
+                --no-show-model-warnings
+
+          echo "Checking for changes..."
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Changes found. Pushing and creating PR..."
+            git push origin $BRANCH_NAME
+            
+            # Ambil pesan commit terakhir sebagai Summary/Title PR
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+            
+            # Buat PR dengan Title dari Summary AI (Auto-detected base branch)
+            gh pr create --title "$COMMIT_MSG" \
+                         --body "## 🤖 Auto-Generated PR\n\n### 📝 Summary\n\n$COMMIT_MSG\n\n---\n*Generated via Z.ai API*" \
+                         || echo "PR already exists"
+          else
+            echo "No changes made. Cleaning up new branch..."
+            git push origin :$BRANCH_NAME || true
+          fi
+
+      - name: Add Robot Reaction (No Text Comment)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Tentukan apakah trigger dari Comment atau Issue Baru
+          if [ "${{ github.event_name }}" == "issue_comment" ]; then
+            SUBJECT_ID="${{ github.event.comment.node_id }}"
+          else
+            SUBJECT_ID="${{ github.event.issue.node_id }}"
+          fi
+          
+          # Tambahkan emoji reaction ROBOT 🤖
+          gh api graphql -f query='mutation($id: ID!) { addReaction(input: {subjectId: $id, content: ROBOT}) { reaction { content } } }' -f id=$SUBJECT_ID || echo "Failed to add reaction"
+          
