@@ -62,14 +62,11 @@ jobs:
         echo "Build Target: ${{ github.event.inputs.BUILD_TARGET }}.img"
         echo "::endgroup::"
 
-    # You might want to Checkout your repo first, but not mandatory
     - name: Check Out
       uses: actions/checkout@v4
 
-    # Cleanup The Actions Workspace Using Custom Composite Run Actions
     - name: Cleanup
       uses: rokibhasansagar/slimhub_actions@main
-      # That's it! Now use your normal steps
 
     - name: Prepare the environment
       run: |
@@ -160,19 +157,69 @@ jobs:
         lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
+    - name: Calculate Hashes
+      id: hashes
+      run: |
+        cd workspace/out/target/product/Infinix-X6873/
+        
+        # Calculate SHA256
+        SHA256=$(sha256sum vendor_boot.img | awk '{print $1}')
+        echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+        echo "$SHA256  vendor_boot.img" > vendor_boot.img.sha256
+        
+        # Calculate MD5
+        MD5=$(md5sum vendor_boot.img | awk '{print $1}')
+        echo "md5=$MD5" >> $GITHUB_OUTPUT
+        echo "$MD5  vendor_boot.img" > vendor_boot.img.md5
+        
+        echo "Generated Hashes:"
+        cat vendor_boot.img.sha256
+        cat vendor_boot.img.md5
+
     - name: Upload to Release
       uses: softprops/action-gh-release@v2
       with:
         files: | 
           workspace/out/target/product/Infinix-X6873/vendor_boot.img
-          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_TARGET }}.img
-          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.zip
-          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*vendor*.img
+          workspace/out/target/product/Infinix-X6873/*.zip
+          workspace/out/target/product/Infinix-X6873/*.sha256
+          workspace/out/target/product/Infinix-X6873/*.md5
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
         body: |
-          Manifest: ${{ github.event.inputs.MANIFEST_BRANCH }}
-          Device: ${{ github.event.inputs.DEVICE_NAME }}
-          Target: ${{ github.event.inputs.BUILD_TARGET }}.img
+          ## Recovery Image for ${{ github.event.inputs.DEVICE_NAME }}
+          
+          | Component | Details |
+          | :--- | :--- |
+          | **Maintainer** | @${{ github.actor }} |
+          | **Device** | ${{ github.event.inputs.DEVICE_NAME }} |
+          | **Manifest** | ${{ github.event.inputs.MANIFEST_BRANCH }} |
+          | **Target** | vendor_boot.img |
+          
+          ---
+          
+          ### 📝 Flash Instructions
+          1. Download `vendor_boot.img`.
+          2. Reboot to Fastboot Mode.
+          3. Flash the image:
+             ```bash
+             fastboot flash vendor_boot vendor_boot.img
+             fastboot reboot
+             ```
+          
+          ---
+          
+          ### 🔒 Checksums
+          Click the **Copy** button on the top-right of the box to copy the hash.
+          
+          **SHA256**
+          ```
+          ${{ steps.hashes.outputs.sha256 }}
+          ```
+          
+          **MD5**
+          ```
+          ${{ steps.hashes.outputs.md5 }}
+          ```
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
