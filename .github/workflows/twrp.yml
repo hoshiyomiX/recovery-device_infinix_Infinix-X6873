@@ -14,7 +14,7 @@ on:
       DEVICE_TREE_URL:
         description: 'DEVICE_TREE_URL'
         required: true
-        default: 'https://github.com/hoshiyomiX/recovery-device_infinix_Infinix-X6873/twrp-12.1.git'
+        default: 'https://github.com/hoshiyomiX/recovery-device_infinix_Infinix-X6873.git'
       DEVICE_TREE_BRANCH:
         description: 'DEVICE_TREE_BRANCH'
         required: true
