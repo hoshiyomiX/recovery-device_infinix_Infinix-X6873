@@ -49,6 +49,7 @@ jobs:
     permissions:
       contents: write
     steps:
+
     - name: Display Run Parameters
       run: |
         echo "::group::User Environment Variables"
@@ -65,12 +66,37 @@ jobs:
     - name: Check Out
       uses: actions/checkout@v4
 
-    - name: Cleanup
-      uses: rokibhasansagar/slimhub_actions@main
+    # Maximize build space by removing unnecessary packages
+    - name: Maximize build space
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 4096
+        swap-size-mb: 12288
+        remove-dotnet: 'true'
+        remove-android: 'true'
+        remove-haskell: 'true'
+        remove-codeql: 'true'
+        remove-docker-images: 'true'
 
-    - name: Prepare the environment
+    - name: Initialize workspace
       run: |
-        sudo apt update && sudo apt upgrade -y
+        mkdir -p workspace
+        cd workspace
+        echo "workspace-folder=$(pwd)" >> $GITHUB_OUTPUT
+      id: pwd
+
+    # Cache apt packages to speed up dependency installation
+    - name: Cache apt packages
+      uses: actions/cache@v4
+      with:
+        path: /var/cache/apt/archives
+        key: apt-cache-${{ runner.os }}-twrp-${{ hashFiles('.github/workflows/*TWRP.yml') }}
+        restore-keys: |
+          apt-cache-${{ runner.os }}-twrp-
+
+    - name: Prepare the build environment
+      run: |
+        sudo apt update
         DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
             linux-modules-extra-$(uname -r) \
             gperf gcc-multilib gcc-10-multilib g++-multilib g++-10-multilib \
@@ -78,12 +104,31 @@ jobs:
             xsltproc bc ccache lib32readline-dev lib32z1-dev liblz4-tool libncurses-dev libsdl1.2-dev \
             build-essential libgtk-3-dev libglu1-mesa-dev freeglut3-dev git libxml2 lzop pngcrush schedtool squashfs-tools \
             imagemagick libbz2-dev lzma ncftp qemu-user-static libstdc++-10-dev libncurses6 python3 tar
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
-    - name: Install OpenJDK
+    - name: Setup Java 11
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
         java-version: '11'
+
+    # Setup ccache for faster compilation
+    - name: Setup ccache
+      run: |
+        echo "export USE_CCACHE=1" >> ~/.bashrc
+        echo "export CCACHE_EXEC=/usr/bin/ccache" >> ~/.bashrc
+        ccache -M 10G
+        ccache -z
+
+    # Cache ccache directory
+    - name: Cache ccache
+      uses: actions/cache@v4
+      with:
+        path: ~/.ccache
+        key: ccache-${{ github.event.inputs.DEVICE_NAME }}-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ github.run_id }}
+        restore-keys: |
+          ccache-${{ github.event.inputs.DEVICE_NAME }}-${{ github.event.inputs.MANIFEST_BRANCH }}-
+          ccache-${{ github.event.inputs.DEVICE_NAME }}-
 
     - name: Setup SSH Keys
       if: ${{ startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com') || 
@@ -96,29 +141,35 @@ jobs:
 
     - name: Install repo
       run: |
-        mkdir ~/bin
+        mkdir -p ~/bin
         curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
         chmod a+x ~/bin/repo
         sudo ln -sf ~/bin/repo /usr/bin/repo
 
     - name: Initialize repo
       run: |
-        mkdir workspace
-        cd workspace
-        echo "workspace-folder=$(pwd)" >> $GITHUB_OUTPUT
+        cd ${{ steps.pwd.outputs.workspace-folder }}
         git config --global user.name "excaliburXD"
         git config --global user.email "eexcalibur32@gmail.com"
         repo init --depth=1 -u ${{ github.event.inputs.MANIFEST_URL }} -b ${{ github.event.inputs.MANIFEST_BRANCH }}
-      id: pwd
+
+    # Cache repo directory to speed up sync
+    - name: Cache repo
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.pwd.outputs.workspace-folder }}/.repo
+        key: repo-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ hashFiles('**/.repo/manifests/**') }}
+        restore-keys: |
+          repo-${{ github.event.inputs.MANIFEST_BRANCH }}-
 
     - name: Repo Sync
       run: |
-        repo sync -j$(nproc --all) --force-sync
-      working-directory: workspace
+        repo sync -j$(nproc --all) --force-sync --no-tags --no-clone-bundle
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Clone device tree
       run: |
-        git clone ${{ github.event.inputs.DEVICE_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
+        git clone --depth=1 ${{ github.event.inputs.DEVICE_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Clone common tree
@@ -126,7 +177,7 @@ jobs:
         github.event.inputs.COMMON_TREE_URL != null
         && github.event.inputs.COMMON_PATH != null
       run: |
-        git clone ${{ github.event.inputs.COMMON_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.COMMON_PATH }}
+        git clone --depth=1 ${{ github.event.inputs.COMMON_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.COMMON_PATH }}
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Check Build Tree
@@ -144,50 +195,70 @@ jobs:
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
       continue-on-error: true
 
-    - name: Set Swap Space
-      uses: pierotofy/set-swap-space@master
-      with:
-        swap-size-gb: 12
-
     - name: Building recovery
       run: |
+        # Clear potential conflicts
         rm -rf external/gflags
-        source build/envsetup.sh
+        
+        # Build Flags
         export ALLOW_MISSING_DEPENDENCIES=true
+        export USE_CCACHE=1
+        export CCACHE_EXEC=/usr/bin/ccache
+        export LC_ALL=C
+        
+        source build/envsetup.sh
         lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+      continue-on-error: true
+
+    - name: Show ccache stats
+      run: ccache -s
 
     - name: Calculate Hashes
       id: hashes
       run: |
-        cd workspace/out/target/product/Infinix-X6873/
+        # Navigate to the specific output folder (Infinix-X6873)
+        cd ${{ steps.pwd.outputs.workspace-folder }}/out/target/product/Infinix-X6873/
         
+        # Identify the target image
+        if [ -f "vendor_boot.img" ]; then
+          TARGET_IMG="vendor_boot.img"
+        elif [ -f "boot.img" ]; then
+          TARGET_IMG="boot.img"
+        elif [ -f "recovery.img" ]; then
+          TARGET_IMG="recovery.img"
+        else
+          echo "No image found!"
+          exit 1
+        fi
+
         # Calculate SHA256
-        SHA256=$(sha256sum vendor_boot.img | awk '{print $1}')
+        SHA256=$(sha256sum "$TARGET_IMG" | awk '{print $1}')
         echo "sha256=$SHA256" >> $GITHUB_OUTPUT
-        echo "$SHA256  vendor_boot.img" > vendor_boot.img.sha256
+        echo "$SHA256  $TARGET_IMG" > "$TARGET_IMG.sha256"
         
         # Calculate MD5
-        MD5=$(md5sum vendor_boot.img | awk '{print $1}')
+        MD5=$(md5sum "$TARGET_IMG" | awk '{print $1}')
         echo "md5=$MD5" >> $GITHUB_OUTPUT
-        echo "$MD5  vendor_boot.img" > vendor_boot.img.md5
+        echo "$MD5  $TARGET_IMG" > "$TARGET_IMG.md5"
         
-        echo "Generated Hashes:"
-        cat vendor_boot.img.sha256
-        cat vendor_boot.img.md5
+        echo "Target Image: $TARGET_IMG"
+        echo "SHA256: $SHA256"
+        echo "MD5: $MD5"
 
     - name: Upload to Release
       uses: softprops/action-gh-release@v2
       with:
         files: | 
-          workspace/out/target/product/Infinix-X6873/vendor_boot.img
-          workspace/out/target/product/Infinix-X6873/*.zip
-          workspace/out/target/product/Infinix-X6873/*.sha256
-          workspace/out/target/product/Infinix-X6873/*.md5
+          # Hardcoded path to Infinix-X6873 to match build logs
+          ${{ steps.pwd.outputs.workspace-folder }}/out/target/product/Infinix-X6873/*.img
+          ${{ steps.pwd.outputs.workspace-folder }}/out/target/product/Infinix-X6873/*.zip
+          ${{ steps.pwd.outputs.workspace-folder }}/out/target/product/Infinix-X6873/*.sha256
+          ${{ steps.pwd.outputs.workspace-folder }}/out/target/product/Infinix-X6873/*.md5
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
         body: |
-          ## Recovery Image for ${{ github.event.inputs.DEVICE_NAME }}
+          ## 🛠️ Recovery Image for ${{ github.event.inputs.DEVICE_NAME }}
           
           | Component | Details |
           | :--- | :--- |
@@ -221,5 +292,7 @@ jobs:
           ```
           ${{ steps.hashes.outputs.md5 }}
           ```
+          
+          *Built with optimizations: ccache, apt-cache, parallel compilation*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
