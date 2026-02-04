@@ -41,9 +41,9 @@ on:
         required: true
         default: 'fox_X6873'
       BUILD_TARGET:
-        description: 'BUILD_TARGET (recovery)'
+        description: 'BUILD_TARGET'
         required: true
-        default: 'recovery'
+        default: 'vendorboot'
 
 jobs:
   build:
