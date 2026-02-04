@@ -1,4 +1,4 @@
-name: X6873 OFRP
+name: OFRP X6873
 
 on:
   workflow_dispatch:
