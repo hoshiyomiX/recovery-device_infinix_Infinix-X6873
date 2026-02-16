@@ -1,6 +1,6 @@
 # OrangeFox Recovery Build Workflow
 # Device: Infinix GT 30 Pro (X6873)
-# Compatible: OrangeFox R12.1 (Android 12.1/13+ base)
+# Compatible: OrangeFox R11.3 (fox_12.1 manifest)
 # Maintainer: hoshiyomiX
 
 name: OrangeFox X6873
@@ -146,7 +146,7 @@ jobs:
             libtinfo5 libtinfo-dev openjdk-17-jdk wget curl rsync
 
       # --------------------------------------------------------
-      # Step 4: Setup Java 17 (Required for OrangeFox R12.1)
+      # Step 4: Setup Java 17 (Required for OrangeFox R11.3)
       # --------------------------------------------------------
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -548,8 +548,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: |
-            OrangeFox R12.1 - ${{ env.FOX_DEVICE_MODEL }} (${{ github.event.inputs.DEVICE_NAME }})
-          tag_name: OF-R12.1-${{ github.event.inputs.DEVICE_NAME }}-${{ steps.artifacts.outputs.build_date }}
+            OrangeFox R11.3 - ${{ env.FOX_DEVICE_MODEL }} (${{ github.event.inputs.DEVICE_NAME }})
+          tag_name: OF-R11.3-${{ github.event.inputs.DEVICE_NAME }}-${{ steps.artifacts.outputs.build_date }}
           body: |
             ## 🔥 OrangeFox Recovery for ${{ env.FOX_DEVICE_MODEL }}
 
@@ -557,7 +557,7 @@ jobs:
             | :--- | :--- |
             | **Device** | ${{ env.FOX_DEVICE_MODEL }} (${{ github.event.inputs.DEVICE_NAME }}) |
             | **Platform** | MediaTek ${{ env.FOX_PLATFORM }} (Dimensity 8350) |
-            | **OrangeFox Version** | R12.1 (${{ github.event.inputs.MANIFEST_BRANCH }}) |
+            | **OrangeFox Version** | R11.3 (${{ github.event.inputs.MANIFEST_BRANCH }}) |
             | **Build Date** | ${{ steps.artifacts.outputs.build_date }} |
             | **Build Type** | ${{ github.event.inputs.BUILD_TYPE }} |
             | **Maintainer** | @${{ github.actor }} |
@@ -665,7 +665,7 @@ jobs:
         if: steps.artifacts.outputs.zip_name != ''
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: OF-R12.1-${{ github.event.inputs.DEVICE_NAME }}-${{ steps.artifacts.outputs.build_date }}
+          tag_name: OF-R11.3-${{ github.event.inputs.DEVICE_NAME }}-${{ steps.artifacts.outputs.build_date }}
           files: ${{ steps.artifacts.outputs.zip_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -676,7 +676,7 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: OrangeFox-R12.1-${{ github.event.inputs.DEVICE_NAME }}-${{ steps.artifacts.outputs.build_date }}
+          name: OrangeFox-R11.3-${{ github.event.inputs.DEVICE_NAME }}-${{ steps.artifacts.outputs.build_date }}
           path: |
             ${{ steps.artifacts.outputs.image_path }}
             ${{ steps.artifacts.outputs.image_path }}.sha256
