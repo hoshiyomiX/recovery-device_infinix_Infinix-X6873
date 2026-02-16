@@ -31,7 +31,7 @@ Works:
 - [X] Flashing
 - [X] MTP
 - [X] Sideload
-- [ ] Decryption
+- [X] Decryption (AIDL Keymint v3 - Fixed)
 - [ ] USB OTG
 - [ ] Vibrator
 

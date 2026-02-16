@@ -107,12 +107,26 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES_DEBUG += \
     update_engine_client
 
-# Additional configs
+# Additional configs - AIDL Security Libraries for Decryption
 TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += \
-    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.keymaster@4.1
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.keymaster@4.1 \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.security.keymint-V1-ndk.so \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.security.keymint-V3-ndk.so \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.gatekeeper-V1-ndk.so \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.security.secureclock-V1-ndk.so \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.security.sharedsecret-V1-ndk.so \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.security.rkp-V3-ndk.so \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.keymaster-V4-ndk.so
 
 TARGET_RECOVERY_DEVICE_MODULES += \
-    android.hardware.keymaster@4.1
+    android.hardware.keymaster@4.1 \
+    android.hardware.security.keymint-V1-ndk \
+    android.hardware.security.keymint-V3-ndk \
+    android.hardware.gatekeeper-V1-ndk \
+    android.hardware.security.secureclock-V1-ndk \
+    android.hardware.security.sharedsecret-V1-ndk \
+    android.hardware.security.rkp-V3-ndk \
+    android.hardware.keymaster-V4-ndk
 
 # Fix Boot
 PRODUCT_COPY_FILES += \
@@ -368,3 +382,18 @@ PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/lib/modules/vcp_status.ko:vendor_ramdisk/lib/modules/vcp_status.ko \
     device/infinix/Infinix-X6873/recovery/root/lib/modules/vtdr6126a_fhdp1224x2720_dsi_vdo_tm_144hz_x6873.ko:vendor_ramdisk/lib/modules/vtdr6126a_fhdp1224x2720_dsi_vdo_tm_144hz_x6873.ko \
     device/infinix/Infinix-X6873/recovery/root/lib/modules/xhci-mtk-hcd-v2.ko:vendor_ramdisk/lib/modules/xhci-mtk-hcd-v2.ko
+
+# Copy AIDL Security Libraries for Decryption
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.security.keymint-V3-ndk.so:vendor/lib64/android.hardware.security.keymint-V3-ndk.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.security.keymint-V1-ndk.so:vendor/lib64/android.hardware.security.keymint-V1-ndk.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.gatekeeper-V1-ndk.so:vendor/lib64/android.hardware.gatekeeper-V1-ndk.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.security.secureclock-V1-ndk.so:vendor/lib64/android.hardware.security.secureclock-V1-ndk.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.security.sharedsecret-V1-ndk.so:vendor/lib64/android.hardware.security.sharedsecret-V1-ndk.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.security.rkp-V3-ndk.so:vendor/lib64/android.hardware.security.rkp-V3-ndk.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.keymaster-V4-ndk.so:vendor/lib64/android.hardware.keymaster-V4-ndk.so
+
+# Copy Keymint Service Binaries
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustonic:vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustonic \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/android.hardware.gatekeeper-service.trustonic:vendor/bin/hw/android.hardware.gatekeeper-service.trustonic

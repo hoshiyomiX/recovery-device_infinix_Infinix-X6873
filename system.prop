@@ -14,4 +14,8 @@ ro.hardware.gatekeeper=trustonic
 ro.vendor.mtk_tee_gp_support=1
 ro.vendor.mtk_trustonic_tee_support=1
 
+# Keymaster/Keymint - AIDL v3 support
 keymaster_ver=4.1
+ro.hardware.keymaster=trustonic
+ro.hardware.keymint=trustonic
+ro.security.keymint.version=3
