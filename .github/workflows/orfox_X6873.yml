@@ -50,9 +50,9 @@ on:
         required: false
         type: string
       DEVICE_NAME:
-        description: 'Device Codename'
+        description: 'Device Codename (must match PRODUCT_DEVICE in device.mk)'
         required: true
-        default: 'X6873'
+        default: 'Infinix-X6873'
         type: string
       MAKEFILE_NAME:
         description: 'Makefile Name (for lunch command)'
@@ -84,7 +84,8 @@ on:
 
 # Environment Variables
 env:
-  FOX_DEVICE_NAME: X6873
+  FOX_DEVICE_NAME: Infinix-X6873
+  FOX_DEVICE_CODE: X6873
   FOX_DEVICE_MODEL: "Infinix GT 30 Pro"
   FOX_PLATFORM: mt6897
   FOX_ARCH: arm64
@@ -329,7 +330,7 @@ jobs:
 
           # OrangeFox specific variables
           export FOX_BURNER_MAINTAINERS="${{ github.actor }}"
-          export FOX_RECOVERY_DEVICE_CODENAME="${{ github.event.inputs.DEVICE_NAME }}"
+          export FOX_RECOVERY_DEVICE_CODENAME="${{ env.FOX_DEVICE_CODE }}"
           export FOX_RECOVERY_DEVICE_MODEL="${{ env.FOX_DEVICE_MODEL }}"
           export FOX_RECOVERY_PLATFORM="${{ env.FOX_PLATFORM }}"
 
@@ -337,12 +338,14 @@ jobs:
           BUILD_TARGET="${{ github.event.inputs.BUILD_TARGET }}"
           BUILD_TYPE="${{ github.event.inputs.BUILD_TYPE }}"
           DEVICE_NAME="${{ github.event.inputs.DEVICE_NAME }}"
+          DEVICE_CODE="${{ env.FOX_DEVICE_CODE }}"
           MAKEFILE_NAME="${{ github.event.inputs.MAKEFILE_NAME }}"
 
           echo "=========================================="
           echo "  OrangeFox Recovery Build Configuration"
           echo "=========================================="
           echo "Device: $DEVICE_NAME"
+          echo "Device Code: $DEVICE_CODE"
           echo "Model: ${{ env.FOX_DEVICE_MODEL }}"
           echo "Platform: ${{ env.FOX_PLATFORM }}"
           echo "Makefile: $MAKEFILE_NAME"
@@ -423,8 +426,24 @@ jobs:
           echo "=== Searching for Build Artifacts ==="
           echo "Output directory: $OUT_DIR"
 
+          # Try primary output directory first, then fallback to common alternatives
+          if [ ! -d "$OUT_DIR" ]; then
+            echo "⚠️ Primary output directory not found, trying alternatives..."
+            # Try alternative device names
+            for alt_name in "Infinix-X6873" "X6873" "$DEVICE_NAME"; do
+              ALT_DIR="out/target/product/$alt_name"
+              if [ -d "$ALT_DIR" ]; then
+                OUT_DIR="$ALT_DIR"
+                echo "✅ Found output directory: $OUT_DIR"
+                break
+              fi
+            done
+          fi
+
           if [ ! -d "$OUT_DIR" ]; then
             echo "❌ Output directory not found!"
+            echo "=== Available product directories ==="
+            ls -la out/target/product/ || true
             exit 1
           fi
 
