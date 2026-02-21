@@ -336,10 +336,29 @@ service trustonic_check_keybox_service /vendor/bin/kmsetkey_ca.trustonic -c
     seclabel u:r:recovery:s0
 
 # ========================================
-# TEE Verification Service
-# Runs AFTER TEE is initialized to verify state
+# v4.0: TA Auto-Update Service (replaces tee_verify.sh)
+# Validates and syncs TA files for cross-firmware compatibility
+# Uses SHA256 checksum validation instead of size comparison
 # ========================================
-service tee_verify_service /vendor/bin/tee_verify.sh
+service ta_auto_update /vendor/bin/ta_auto_update.sh check
+    class late_start
+    user root
+    group root system
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+# Manual TA sync trigger
+service ta_manual_sync /vendor/bin/ta_auto_update.sh sync
+    class late_start
+    user root
+    group root system
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+# TA Rollback service
+service ta_rollback /vendor/bin/ta_auto_update.sh rollback
     class late_start
     user root
     group root system
@@ -397,8 +416,24 @@ on property:ro.vendor.tee.initialized=1
     start vendor.gatekeeper-trustonic
     start vendor.rpmbservice
     start deviceauthen_hal_service
-    start tee_verify_service
+    start ta_auto_update
     start rpmb_backup_service
+
+# ========================================
+# v4.0: TA Update Triggers
+# If TA was updated, restart TEE services to reload
+# ========================================
+on property:ro.vendor.ta.updated=1
+    # Stop TEE services to reload updated TAs
+    stop mobicore
+    stop vendor.keymint-trustonic
+    stop vendor.gatekeeper-trustonic
+
+on property:ro.vendor.ta.sync_requested=1
+    start ta_manual_sync
+
+on property:ro.vendor.ta.rollback_requested=1
+    start ta_rollback
 
 # ========================================
 # FIX v3.0: Fallback mechanisms for TEE failure
