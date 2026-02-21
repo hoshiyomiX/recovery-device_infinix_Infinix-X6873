@@ -438,3 +438,7 @@ PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/08050000000000000000000000003419.drbin:vendor/app/mcRegistry/08050000000000000000000000003419.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/40188311faf343488db888ad39496f9a.drbin:vendor/app/mcRegistry/40188311faf343488db888ad39496f9a.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/5020170115e016302017012521300000.drbin:vendor/app/mcRegistry/5020170115e016302017012521300000.drbin
+# Copy kmsetkey for Keymint Keybox Support
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/kmsetkey_ca.trustonic:vendor/bin/kmsetkey_ca.trustonic \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libkmsetkey.so:vendor/lib64/libkmsetkey.so
