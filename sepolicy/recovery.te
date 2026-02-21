@@ -1,0 +1,81 @@
+# SELinux Policy for Infinix X6873 Recovery
+# Permissive policies for Trustonic TEE services
+#
+# Part of FIX for: Trustonic TEE Binding
+
+# Permissive mode for recovery domain
+permissive recovery;
+
+# Allow recovery to manage TEE services
+allow recovery tee_device:chr_file { read write open ioctl };
+allow recovery mobicore_device:chr_file { read write open ioctl };
+allow recovery tci_device:chr_file { read write open ioctl };
+
+# Allow recovery to access mcRegistry
+allow recovery mcRegistry_data_file:dir { read write open add_name remove_name search };
+allow recovery mcRegistry_data_file:file { read write open create unlink };
+
+# Allow recovery to access RPMB
+allow recovery rpmb_device:chr_file { read write open ioctl };
+allow recovery rpmb_data_file:dir { read write open add_name remove_name search };
+allow recovery rpmb_data_file:file { read write open create unlink };
+
+# Allow recovery to access persist partition
+allow recovery persist_file:dir { read write open add_name remove_name search };
+allow recovery persist_file:file { read write open create unlink };
+
+# Allow recovery to access nvdata
+allow recovery nvdata_file:dir { read write open add_name remove_name search };
+allow recovery nvdata_file:file { read write open create unlink };
+
+# Allow recovery to manage vendor binaries
+allow recovery vendor_file:dir { read open search };
+allow recovery vendor_file:file { read open execute };
+allow recovery vendor_file:lnk_file { read };
+
+# Allow recovery to access keymaster/keymint
+allow recovery keymaster_device:chr_file { read write open ioctl };
+allow recovery keymint_data_file:dir { read write open add_name remove_name search };
+allow recovery keymint_data_file:file { read write open create unlink };
+
+# Allow recovery to access gatekeeper
+allow recovery gatekeeper_data_file:dir { read write open add_name remove_name search };
+allow recovery gatekeeper_data_file:file { read write open create unlink };
+
+# Allow hwservicemanager access for TEE services
+allow recovery hwservicemanager:binder { call transfer };
+allow recovery hwservicemanager_prop:file { read open };
+allow recovery hal_keymint_default:binder { call transfer };
+allow recovery hal_gatekeeper_default:binder { call transfer };
+allow recovery hal_trustonic_tee_default:binder { call transfer };
+
+# Allow vold access for decryption
+allow recovery vold:binder { call transfer };
+allow recovery vold_data_file:dir { read write open add_name remove_name search };
+allow recovery vold_data_file:file { read write open create unlink };
+
+# Allow access to metadata partition
+allow recovery metadata_file:dir { read write open add_name remove_name search };
+allow recovery metadata_file:file { read write open create unlink };
+
+# Allow access to system properties
+allow recovery property_socket:sock_file { write };
+allow recovery init:unix_stream_socket { connectto };
+allow recovery system_prop:property_service { set };
+
+# Allow access to crypto properties
+allow recovery crypto_prop:property_service { set };
+
+# Trustonic specific
+allow recovery trustonic_data_file:dir { read write open add_name remove_name search create };
+allow recovery trustonic_data_file:file { read write open create unlink };
+
+# Transsion specific services
+allow recovery transsion_security_data_file:dir { read write open add_name remove_name search };
+allow recovery transsion_security_data_file:file { read write open create unlink };
+
+# Allow access to system libraries
+allow recovery system_lib_file:dir { read open search };
+allow recovery system_lib_file:file { read open execute };
+allow recovery vendor_lib_file:dir { read open search };
+allow recovery vendor_lib_file:file { read open execute };

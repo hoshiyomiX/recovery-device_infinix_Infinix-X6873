@@ -66,8 +66,13 @@ BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_TAGS_OFFSET)
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 BOARD_MKBOOTIMG_ARGS += --dtb_offset $(BOARD_DTB_OFFSET)
 
-# AVB
+# ========================================
+# FIX: AVB Configuration for TEE Binding
+# ========================================
 BOARD_AVB_ENABLE := true
+# Allow boot with disabled AVB for TEE compatibility
+BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 2
+BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --set_hashtree_disabled_flag
 
 # Partitions configs
 BOARD_FLASH_BLOCK_SIZE := 262144 # (BOARD_KERNEL_PAGESIZE * 64)
@@ -121,14 +126,39 @@ TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
 
-# Crypto - AIDL Keymint Support for Android 15
+# ========================================
+# FIX: Crypto - AIDL Keymint Support for Android 15
+# Enhanced configuration for Trustonic TEE
+# ========================================
 TW_INCLUDE_CRYPTO := true
 TW_INCLUDE_CRYPTO_FBE := true
 TW_USE_FSCRYPT_POLICY := 2
+
 # AIDL Keymint v3 support (Android 15+)
 TW_INCLUDE_KEYMINT_V3 := true
+
 # Trustonic TEE support
 TW_INCLUDE_CRYPTO_TRUSTONIC := true
+
+# ========================================
+# FIX: Additional Crypto Flags for RPMB
+# ========================================
+# Metadata encryption support
+BOARD_USES_METADATA_PARTITION := true
+TW_INCLUDE_FBE_METADATA_DECRYPT := true
+
+# Force decrypt support
+TW_FORCE_DECRYPT_SUPPORT := true
+
+# Multi-user decryption support
+TW_CRYPTO_INCLUDE_FBE := true
+
+# ========================================
+# FIX: Keymaster fallback support
+# ========================================
+# Support both HIDL and AIDL keymaster
+TW_INCLUDE_KEYMASTER_HIDL := true
+TW_INCLUDE_KEYMASTER_AIDL := true
 
 # Hack
 PLATFORM_SECURITY_PATCH := 2099-12-31
@@ -156,7 +186,7 @@ TARGET_USES_LOGD := true
 TARGET_USES_MKE2FS := true
 TW_MAX_BRIGHTNESS := 255
 TW_LOAD_VENDOR_BOOT_MODULES := true
-TW_DEVICE_VERSION := X6873
+TW_DEVICE_VERSION := X6873-FIXED
 TW_CUSTOM_CPU_TEMP_PATH := /sys/devices/virtual/thermal/thermal_zone31/temp
 
 # StatusBar
@@ -178,3 +208,20 @@ TARGET_RECOVERY_DEVICE_MODULES := libinit_X6873
 # Haptic/Vibrator Support
 TW_SUPPORT_INPUT_AIDL_HAPTICS := true
 TW_SUPPORT_INPUT_AIDL_HAPTICS_FQNAME := "IVibrator/default"
+
+# ========================================
+# FIX: Additional recovery modules
+# ========================================
+# Include vendor binaries for TEE
+TARGET_RECOVERY_DEVICE_MODULES += \
+    libMcClient \
+    libTEECommon \
+    libkmsetkey \
+    gatekeeper.trustonic \
+    android.hardware.gatekeeper@1.0-impl
+
+# ========================================
+# FIX: SELinux permissive for recovery
+# ========================================
+# This allows TEE services to run without strict SELinux
+BOARD_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy

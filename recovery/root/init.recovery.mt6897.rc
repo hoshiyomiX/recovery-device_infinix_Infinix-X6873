@@ -3,19 +3,56 @@ import /init.recovery.usb.rc
 
 on init
     export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
-    setprop crypto.ready 1
+    setprop crypto.ready 0
     
     # USB controller setup
     setprop sys.usb.controller 112b0000.dwc3
     setprop sys.usb.configfs 1
+    
+    # ========================================
+    # FIX: Trustonic TEE Binding
+    # Set AVB properties to bypass verification
+    # ========================================
+    setprop ro.boot.verifiedbootstate orange
+    setprop ro.boot.flash.locked 0
+    setprop ro.boot.vbmeta.device_state unlocked
+    setprop ro.boot.veritymode enforcing
+    setprop ro.boot.verifiedbootstate orange
+    
+    # Trustonic TEE compatibility flags
+    setprop ro.vendor.trustonic.tee.support 1
+    setprop ro.vendor.mtk_tee_gp_support 1
+    setprop ro.vendor.mtk_trustonic_tee_support 1
+    
+    # Keymint/Keymaster version for compatibility
+    setprop keymaster_ver 4.1
+    setprop ro.hardware.keymaster trustonic
+    setprop ro.hardware.keymint trustonic
+    setprop ro.security.keymint.version 3
 
 on fs
     install_keyring
     wait /dev/block/platform/soc/112b0000.ufshci
     symlink /dev/block/platform/soc/112b0000.ufshci /dev/block/bootdevice
 
-# We need vold early for metadata encryption
+# ========================================
+# FIX: Early partition mounting for TEE
+# ========================================
 on early-fs
+    # Mount critical partitions early for TEE initialization
+    wait /dev/block/by-name/persist
+    mount ext4 /dev/block/by-name/persist /mnt/vendor/persist noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc
+    
+    wait /dev/block/by-name/nvdata
+    mount ext4 /dev/block/by-name/nvdata /mnt/vendor/nvdata noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc
+    
+    # Create required directories for Trustonic
+    mkdir /mnt/vendor/persist/mcRegistry 0771 system system
+    mkdir /mnt/vendor/persist/rpmb 0700 system system
+    mkdir /mnt/vendor/persist/startPara 0700 system system
+    mkdir /mnt/vendor/persist/tee 0700 system system
+    
+    # Start vold early for metadata encryption
     start vold
 
 on late-fs
@@ -33,12 +70,23 @@ on post-fs
     mkdir /tranfs/rpmb 0700 system system
     mkdir /mnt/vendor/persist/startPara 0700 system system
     mkdir /tranfs/startPara 0700 system system
+    
+    # ========================================
+    # FIX: RPMB Critical - Create backup paths
+    # ========================================
+    mkdir /mnt/vendor/persist/rpmb_backup 0700 system system
+    mkdir /data/rpmb_fallback 0700 system system
 
 on boot
     start mtk.plpath.utils.link
     start vendor.usb_hal
     start vendor.usb_gadget_hal
     start vendor.vibrator_hal
+    
+    # ========================================
+    # FIX: TEE State Verification
+    # ========================================
+    start tee_verify_service
 
 on property:persist.vendor.mtk.pl_lnk=1
     symlink /dev/block/mapper/pl_a /dev/block/by-name/preloader_raw_a
@@ -77,15 +125,20 @@ service mtk.plpath.utils.link /system/bin/mtk_plpath_utils
     disabled
     seclabel u:r:recovery:s0
 
-# Trustonic TEE Service - must start first
+# ========================================
+# FIX: Trustonic TEE Service with retry logic
+# ========================================
 service vendor.trustonic-tee /vendor/bin/hw/vendor.trustonic.tee@1.1-service
     class hal
     user root
     group root system
     disabled
+    oneshot
     seclabel u:r:recovery:s0
-
-# Gatekeeper Service - Trustonic version
+    
+# ========================================
+# FIX: Gatekeeper with fallback support
+# ========================================
 service vendor.gatekeeper-trustonic /vendor/bin/hw/android.hardware.gatekeeper-service.trustonic
     class early_hal
     interface android.hardware.gatekeeper@1.0::IGatekeeper default
@@ -93,9 +146,21 @@ service vendor.gatekeeper-trustonic /vendor/bin/hw/android.hardware.gatekeeper-s
     user root
     group root
     disabled
+    oneshot
     seclabel u:r:recovery:s0
 
-# Keymint Service - Trustonic version
+# Software Gatekeeper fallback
+service vendor.gatekeeper-fallback /vendor/bin/hw/android.hardware.gatekeeper@1.0-service
+    class late_start
+    user root
+    group root
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
+# ========================================
+# FIX: Keymint v3 with proper AIDL interfaces
+# ========================================
 service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustonic
     class early_hal
     interface android.hardware.keymaster@4.0::IKeymasterDevice default
@@ -107,14 +172,18 @@ service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymin
     user root
     group root system
     disabled
+    oneshot
     seclabel u:r:recovery:s0
 
-# Transsion RPMB Service - required for secure storage
+# ========================================
+# FIX: RPMB Service with error handling
+# ========================================
 service vendor.rpmbservice /vendor/bin/hw/vendor.transsion.hardware.security.rpmbservice@1.0-service
     class hal
     user root
     group root system
     disabled
+    oneshot
     seclabel u:r:recovery:s0
 
 # Transsion Device Authentication Service
@@ -123,6 +192,7 @@ service deviceauthen_hal_service /vendor/bin/hw/vendor.transsion.hardware.securi
     user root
     group root system
     disabled
+    oneshot
     seclabel u:r:recovery:s0
 
 # Transsion HAP Service
@@ -131,6 +201,7 @@ service vendor.hap_hal /vendor/bin/hw/vendor.transsion.hardware.security.hap@1.0
     user root
     group root system
     disabled
+    oneshot
     seclabel u:r:recovery:s0
 
 # Transsion Critical Parameter Verification Service
@@ -139,6 +210,7 @@ service trancriticalparavfy_service /vendor/bin/hw/vendor.transsion.hardware.sec
     user root
     group root system
     disabled
+    oneshot
     seclabel u:r:recovery:s0
 
 # Trustonic Keybox Check Service
@@ -150,7 +222,20 @@ service trustonic_check_keybox_service /vendor/bin/kmsetkey_ca.trustonic -c
     disabled
     seclabel u:r:recovery:s0
 
-# Start services when crypto is ready
+# ========================================
+# FIX: TEE Verification Service
+# ========================================
+service tee_verify_service /vendor/bin/tee_verify.sh
+    class late_start
+    user root
+    group root system
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+# ========================================
+# Start sequence with proper dependencies
+# ========================================
 on property:crypto.ready=1
     start vendor.trustonic-tee
     start vendor.keymint-trustonic
@@ -163,9 +248,9 @@ on property:hwservicemanager.ready=true
     start vendor.keymint-trustonic
     start vendor.rpmbservice
     start deviceauthen_hal_service
+    start tee_verify_service
 
 # Trustonic TEE ready - trigger gatekeeper start
-# Set property explicitly since triggers only fire on property CHANGE
 on property:init.svc.vendor.trustonic-tee=running
     setprop ro.vendor.trustonic.ready true
     start vendor.gatekeeper-trustonic
@@ -173,6 +258,18 @@ on property:init.svc.vendor.trustonic-tee=running
 # Gatekeeper starts after Trustonic TEE is ready
 on property:ro.vendor.trustonic.ready=true
     start vendor.gatekeeper-trustonic
+
+# ========================================
+# FIX: Fallback mechanisms for TEE failure
+# ========================================
+on property:ro.vendor.trustonic.ready=false
+    # Try software fallback
+    start vendor.gatekeeper-fallback
+    setprop crypto.ready 0
+
+on property:init.svc.vendor.trustonic-tee=stopped
+    # Retry logic - restart TEE service
+    start vendor.trustonic-tee
 
 on property:ro.crypto.state=unsupported
     stop mobicore

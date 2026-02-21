@@ -14,24 +14,74 @@ ro.recovery.usb.fastboot.pid=4EE0
 # USB Controller
 sys.usb.controller=112b0000.dwc3
 
-# Crypto
+# ========================================
+# Crypto Configuration
+# ========================================
 ro.crypto.volume.filenames_mode=aes-256-cts
+ro.crypto.type=file
+ro.crypto.state=encrypted
 
-# Gatekeeper
+# ========================================
+# Gatekeeper Configuration
+# ========================================
 ro.hardware.gatekeeper=trustonic
 
-# TEE
+# ========================================
+# TEE Configuration - FIX for Trustonic TEE Binding
+# ========================================
 ro.vendor.mtk_tee_gp_support=1
 ro.vendor.mtk_trustonic_tee_support=1
+ro.vendor.trustonic.tee.support=1
+ro.vendor.trustonic.ready=false
 
+# ========================================
 # Keymaster/Keymint - AIDL v3 support
+# ========================================
 keymaster_ver=4.1
 ro.hardware.keymaster=trustonic
 ro.hardware.keymint=trustonic
 ro.security.keymint.version=3
 
+# ========================================
 # Trustonic TEE ready flag
+# ========================================
 ro.vendor.trustonic.ready=true
+
+# ========================================
+# FIX: AVB Bypass Properties
+# These properties help bypass AVB verification
+# for Trustonic TEE compatibility
+# ========================================
+ro.boot.verifiedbootstate=orange
+ro.boot.flash.locked=0
+ro.boot.vbmeta.device_state=unlocked
+ro.boot.veritymode=enforcing
+
+# ========================================
+# FIX: Keymaster fallback support
+# ========================================
+ro.hardware.keystore=trustonic
+ro.security.keystore.keymaster=v4.1
+
+# ========================================
+# FIX: FBE Configuration
+# ========================================
+ro.crypto.fbe=1
+ro.crypto.fbe_min_api=29
 
 # Vibrator
 ro.vendor.tran.vibrator.option=single
+
+# ========================================
+# FIX: MTK Platform specific
+# ========================================
+ro.vendor.mtk_platform=mt6897
+ro.vendor.mediatek.platform=mt6897
+ro.board.platform=mt6897
+
+# ========================================
+# FIX: Transsion security services
+# ========================================
+ro.vendor.transsion.security.rpmbsupport=1
+ro.vendor.transsion.security.deviceauthen=2.0
+ro.vendor.transsion.security.hap=1.0

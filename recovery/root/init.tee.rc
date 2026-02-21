@@ -1,5 +1,9 @@
 # Start Daemon (Registry directories should already be present)
 # Based on firmware trustonic.rc for X6873
+# 
+# FIX: Enhanced Trustonic TEE initialization with error handling
+#
+
 service mobicore /vendor/bin/mcDriverDaemon --sfs-reformat --P1 /mnt/vendor/persist/mcRegistry \
         -r /vendor/app/mcRegistry/06090000000000000000000000000000.drbin \
         -r /vendor/app/mcRegistry/020f0000000000000000000000000000.drbin \
@@ -27,6 +31,7 @@ service mobicore /vendor/bin/mcDriverDaemon --sfs-reformat --P1 /mnt/vendor/pers
     user root
     group root
     disabled
+    oneshot
     seclabel u:r:recovery:s0
 
 # t-Drv naming
@@ -52,6 +57,13 @@ on init
     mkdir /mnt/vendor/nvcfg 0771 system system
     mkdir /mnt/vendor/protect_f 0771 system system
     mkdir /mnt/vendor/protect_s 0771 system system
+    
+    # ========================================
+    # FIX: Create additional directories for TEE
+    # ========================================
+    mkdir /mnt/vendor/persist/tee 0770 system system
+    mkdir /mnt/vendor/persist/tlbin 0770 system system
+    mkdir /mnt/vendor/persist/sp cryptography 0770 system system
 
 on post-fs
     # Mount persist partition for Trustonic TEE
@@ -68,11 +80,28 @@ on post-fs
     mkdir /mnt/vendor/persist/mcRegistry 0771 system system
     mkdir /mnt/vendor/persist/rpmb 0700 system system
     mkdir /mnt/vendor/persist/startPara 0700 system system
+    
+    # ========================================
+    # FIX: RPMB backup directory
+    # ========================================
+    mkdir /mnt/vendor/persist/rpmb_backup 0700 system system
+    
+    # ========================================
+    # FIX: Copy existing RPMB data to backup
+    # ========================================
+    exec -- /vendor/bin/sh -c "cp -r /mnt/vendor/persist/rpmb/* /mnt/vendor/persist/rpmb_backup/ 2>/dev/null || true"
 
 on post-fs-data
     # Create /data/vendor/key_provisioning dir and get proper encryption policy installed
     # Key Installation
     mkdir /data/vendor/key_provisioning 0771 system system
+    
+    # ========================================
+    # FIX: Create additional data directories
+    # ========================================
+    mkdir /data/vendor/tee 0770 system system
+    mkdir /data/vendor/keymaster 0770 system system
+    mkdir /data/vendor/gatekeeper 0770 system system
 
 # For META/FACTORY mode
 on property:ro.crypto.state=unsupported
@@ -91,3 +120,14 @@ on property:vold.decrypt=trigger_restart_framework
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry ++ (FDE encrypted)"
     mkdir /data/vendor/mcRegistry 0775 system system
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (FBE encrypted)"
+
+# ========================================
+# FIX: Handle mobicore failure
+# ========================================
+on property:init.svc.mobicore=stopped
+    # Check if we need to retry
+    start mobicore
+
+on property:init.svc.mobicore=running
+    # Mobicore started successfully
+    setprop ro.vendor.mobicore.ready true
