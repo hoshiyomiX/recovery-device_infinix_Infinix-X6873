@@ -120,7 +120,9 @@ TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += \
     $(TARGET_OUT_SHARED_LIBRARIES)/vendor.trustonic.tee@1.0.so \
     $(TARGET_OUT_SHARED_LIBRARIES)/vendor.trustonic.tee@1.1.so \
     $(TARGET_OUT_SHARED_LIBRARIES)/vendor.trustonic.tee.tui@1.0.so \
-    $(TARGET_OUT_SHARED_LIBRARIES)/libMcClient.so
+    $(TARGET_OUT_SHARED_LIBRARIES)/libMcClient.so \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libTEECommon.so \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.system.keystore2-V1-ndk.so
 
 TARGET_RECOVERY_DEVICE_MODULES += \
     android.hardware.keymaster@4.1 \
@@ -134,7 +136,9 @@ TARGET_RECOVERY_DEVICE_MODULES += \
     vendor.trustonic.tee@1.0 \
     vendor.trustonic.tee@1.1 \
     vendor.trustonic.tee.tui@1.0 \
-    libMcClient
+    libMcClient \
+    libTEECommon \
+    android.system.keystore2-V1-ndk
 
 # Fix Boot
 PRODUCT_COPY_FILES += \
@@ -411,7 +415,14 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.trustonic.tee@1.0.so:vendor/lib64/vendor.trustonic.tee@1.0.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.trustonic.tee@1.1.so:vendor/lib64/vendor.trustonic.tee@1.1.so \
-    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.trustonic.tee.tui@1.0.so:vendor/lib64/vendor.trustonic.tee.tui@1.0.so
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.trustonic.tee.tui@1.0.so:vendor/lib64/vendor.trustonic.tee.tui@1.0.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libTEECommon.so:vendor/lib64/libTEECommon.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.system.keystore2-V1-ndk.so:vendor/lib64/android.system.keystore2-V1-ndk.so
+
+# Copy system_ext TEE Libraries
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/system_ext/lib64/libteeservice_client.trustonic.so:system_ext/lib64/libteeservice_client.trustonic.so \
+    device/infinix/Infinix-X6873/recovery/root/system_ext/lib64/libTeeClient.so:system_ext/lib64/libTeeClient.so
 
 # Copy mcRegistry Trustlet Files for TEE
 PRODUCT_COPY_FILES += \
