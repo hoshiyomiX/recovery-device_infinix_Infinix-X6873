@@ -1,57 +1,11 @@
-# Start Daemon (Registry directories should already be present)
-# Based on firmware trustonic.rc for X6873
-# 
-# FIX: Enhanced Trustonic TEE initialization with error handling
+# Infinix X6873 - Trustonic TEE Init Configuration
+# FIXED: Proper TEE initialization without premature RPMB access
 #
-
-service mobicore /vendor/bin/mcDriverDaemon --sfs-reformat --P1 /mnt/vendor/persist/mcRegistry \
-        -r /vendor/app/mcRegistry/06090000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/020f0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/05120000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/05120000000000000000000000000001.drbin \
-        -r /vendor/app/mcRegistry/05160000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/020b0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/05070000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/030b0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/03100000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/030c0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/031c0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/032c0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/033c0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/034c0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/035c0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/036c0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/037c0000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/40188311faf343488db888ad39496f9a.drbin \
-        -r /vendor/app/mcRegistry/07210000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/08050000000000000000000000003419.drbin \
-        -r /vendor/app/mcRegistry/07150000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/07170000000000000000000000000000.drbin \
-        -r /vendor/app/mcRegistry/5020170115e016302017012521300000.drbin
-    user root
-    group root
-    disabled
-    oneshot
-    seclabel u:r:recovery:s0
-
-# t-Drv naming
-# 020f0000000000000000000000000000.drbin : utils
-# 05120000000000000000000000000000.drbin : sec
-# 020b0000000000000000000000000000.drbin : cmdq
-# 05070000000000000000000000000000.drbin : goodix_fp
-# 030b0000000000000000000000000000.drbin : spi
-# 030c0000000000000000000000000000.drbin : spi5
-# 031c0000000000000000000000000000.drbin :
-# 5020170115e016302017012521300000.drbin : drm_hdcp_common
-# 40188311faf343488db888ad39496f9a.drbin : widevine
-# 06090000000000000000000000000000.drbin : drm keyinstall
-# 07210000000000000000000000000000.drbin : keymint/tee
-# 08050000000000000000000000003419.drbin : keymint
-# 07150000000000000000000000000000.drbin :
-# 07170000000000000000000000000000.drbin :
+# This file is imported by init.recovery.mt6897.rc
+# Service definitions are in init.recovery.mt6897.rc for proper ordering
 
 on init
-    #create mountpoint for /mnt/vendor/persist partition
+    # Create mountpoints for vendor partitions
     mkdir /mnt/vendor/persist 0771 system system
     mkdir /mnt/vendor/nvdata 0771 system system
     mkdir /mnt/vendor/nvcfg 0771 system system
@@ -59,75 +13,77 @@ on init
     mkdir /mnt/vendor/protect_s 0771 system system
     
     # ========================================
-    # FIX: Create additional directories for TEE
+    # FIX: Create TEE directories (not accessing RPMB yet)
     # ========================================
     mkdir /mnt/vendor/persist/tee 0770 system system
     mkdir /mnt/vendor/persist/tlbin 0770 system system
-    mkdir /mnt/vendor/persist/sp cryptography 0770 system system
+    mkdir /mnt/vendor/persist/sp_cryptography 0770 system system
 
 on post-fs
-    # Mount persist partition for Trustonic TEE
-    wait /dev/block/by-name/persist
-    mount ext4 /dev/block/by-name/persist /mnt/vendor/persist noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc
+    # ========================================
+    # FIX: Create directories but DO NOT access RPMB yet
+    # RPMB access requires TEE to be fully initialized
+    # ========================================
     
-    chown system system /mnt/vendor/persist
-    chmod 0771 /mnt/vendor/persist
-
-    # We restorecon /mnt/vendor/persist to set SEPolicy label.
-    restorecon /mnt/vendor/persist
-
     # Create mcRegistry to store failure record
     mkdir /mnt/vendor/persist/mcRegistry 0771 system system
     mkdir /mnt/vendor/persist/rpmb 0700 system system
     mkdir /mnt/vendor/persist/startPara 0700 system system
     
-    # ========================================
-    # FIX: RPMB backup directory
-    # ========================================
+    # Create backup directory (backup happens later via rpmb_backup_service)
     mkdir /mnt/vendor/persist/rpmb_backup 0700 system system
     
     # ========================================
-    # FIX: Copy existing RPMB data to backup
+    # REMOVED: Premature RPMB backup
+    # OLD CODE: exec -- /vendor/bin/sh -c "cp -r /mnt/vendor/persist/rpmb/* /mnt/vendor/persist/rpmb_backup/ 2>/dev/null || true"
+    # This was causing issues because RPMB was accessed before TEE initialization
+    # RPMB backup is now handled by rpmb_backup_service after TEE is ready
     # ========================================
-    exec -- /vendor/bin/sh -c "cp -r /mnt/vendor/persist/rpmb/* /mnt/vendor/persist/rpmb_backup/ 2>/dev/null || true"
 
 on post-fs-data
     # Create /data/vendor/key_provisioning dir and get proper encryption policy installed
-    # Key Installation
     mkdir /data/vendor/key_provisioning 0771 system system
     
     # ========================================
-    # FIX: Create additional data directories
+    # FIX: Create additional data directories for TEE
     # ========================================
     mkdir /data/vendor/tee 0770 system system
     mkdir /data/vendor/keymaster 0770 system system
     mkdir /data/vendor/gatekeeper 0770 system system
+    mkdir /data/vendor/mcRegistry 0775 system system
 
-# For META/FACTORY mode
+# ========================================
+# TEE State for META/FACTORY mode
+# ========================================
 on property:ro.crypto.state=unsupported
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry ++ (unencrypted)"
     mkdir /data/vendor/mcRegistry 0775 system system
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (unencrypted)"
 
+# ========================================
 # Normal mode, FBE
+# ========================================
 on property:ro.crypto.type=file && property:ro.crypto.state=encrypted
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry ++ (FBE encrypted)"
     mkdir /data/vendor/mcRegistry 0775 system system
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (FBE encrypted)"
 
+# ========================================
 # Normal mode, FDE
+# ========================================
 on property:vold.decrypt=trigger_restart_framework
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry ++ (FDE encrypted)"
     mkdir /data/vendor/mcRegistry 0775 system system
-    write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (FBE encrypted)"
+    write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (FDE encrypted)"
 
 # ========================================
-# FIX: Handle mobicore failure
+# FIX: Handle mobicore state changes
 # ========================================
-on property:init.svc.mobicore=stopped
-    # Check if we need to retry
-    start mobicore
-
 on property:init.svc.mobicore=running
-    # Mobicore started successfully
+    # Mobicore started successfully - signal TEE ready
     setprop ro.vendor.mobicore.ready true
+
+on property:init.svc.mobicore=stopped
+    # Mobicore stopped - clear ready flag
+    setprop ro.vendor.mobicore.ready false
+    setprop ro.vendor.trustonic.ready false

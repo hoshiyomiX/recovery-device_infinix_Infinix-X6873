@@ -1,4 +1,7 @@
 # Android fstab file.
+# Infinix X6873 (GT 30 Pro) - Recovery FSTAB
+# FIXED: Proper FBE v2 encryption configuration for TWRP decryption
+#
 # The filesystem that contains the filesystem checker binary (typically /system) cannot
 # specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
 
@@ -12,20 +15,33 @@ product                         /product                ext4            rw      
 product                         /product                erofs           ro                                                                                                                              wait,slotselect,logical
 system_ext                      /system_ext             ext4            rw                                                                                                                              wait,slotselect,logical
 system_ext                      /system_ext             erofs           ro                                                                                                                              wait,slotselect,logical
-vendor_dlkm                     /vendor_dlkm    ext4            rw                                                                                                                              wait,slotselect,logical
-vendor_dlkm                     /vendor_dlkm    erofs           ro                                                                                                                              wait,slotselect,logical
+vendor_dlkm                     /vendor_dlkm            ext4            rw                                                                                                                              wait,slotselect,logical
+vendor_dlkm                     /vendor_dlkm            erofs           ro                                                                                                                              wait,slotselect,logical
 odm_dlkm                        /odm_dlkm               ext4            rw                                                                                                                              wait,slotselect,logical
 odm_dlkm                        /odm_dlkm               erofs           ro                                                                                                                              wait,slotselect,logical
 
-# Vendor partitions for TEE and security
+# ========================================
+# FIX: Vendor partitions for TEE and security
+# Early mount required for TEE initialization
+# ========================================
 /dev/block/by-name/persist      /mnt/vendor/persist     ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc                                                                                wait,check,formattable
 /dev/block/by-name/nvdata       /mnt/vendor/nvdata      ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc                                                                                wait,check,formattable
 /dev/block/by-name/nvcfg        /mnt/vendor/nvcfg       ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc                                                                                wait,check,formattable
 /dev/block/by-name/protect1     /mnt/vendor/protect_f   ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc                                                                                wait,check,formattable
 /dev/block/by-name/protect2     /mnt/vendor/protect_s   ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc                                                                                wait,check,formattable
 
-# Userdata partition
-/dev/block/by-name/metadata     /metadata               ext4            noatime,nosuid,nodev,discard                                                                                                            wait,check,formattable
+# ========================================
+# CRITICAL FIX: Metadata partition must use F2FS to match stock firmware
+# Required for FBE metadata encryption key storage
+# Stock firmware uses: /dev/block/by-name/metadata /metadata f2fs
+# ========================================
+/dev/block/by-name/metadata     /metadata               f2fs            noatime,nosuid,nodev,discard                                                                                                            wait,check,formattable,first_stage_mount
+
+# ========================================
+# CRITICAL FIX: Userdata with complete FBE v2 encryption parameters
+# Must match stock firmware exactly for successful decryption
+# FBE v2 + inlinecrypt_optimized + metadata encryption
+# ========================================
 /dev/block/by-name/userdata     /data                   f2fs            noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt                             wait,check,formattable,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption
 
 # Need to have this entry in here even though the mount point itself is no longer needed.

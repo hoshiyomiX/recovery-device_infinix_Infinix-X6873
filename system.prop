@@ -1,7 +1,14 @@
+# Infinix X6873 (GT 30 Pro) System Properties
+# FIXED: Correct crypto and TEE configuration for recovery
+
+# ========================================
 # Fstab
+# ========================================
 ro.postinstall.fstab.prefix=/system
 
+# ========================================
 # USB Configuration
+# ========================================
 ro.sys.usb.storage.type=mtp
 ro.sys.usb.mtp.whql.enable=0
 ro.sys.usb.mtp.device_type=3
@@ -15,19 +22,22 @@ ro.recovery.usb.fastboot.pid=4EE0
 sys.usb.controller=112b0000.dwc3
 
 # ========================================
-# Crypto Configuration
+# CRITICAL FIX: Crypto Configuration
+# FBE v2 with metadata encryption
 # ========================================
 ro.crypto.volume.filenames_mode=aes-256-cts
 ro.crypto.type=file
 ro.crypto.state=encrypted
+ro.crypto.fbe=1
+ro.crypto.fbe_min_api=29
 
 # ========================================
-# Gatekeeper Configuration
+# FIX: Gatekeeper Configuration
 # ========================================
 ro.hardware.gatekeeper=trustonic
 
 # ========================================
-# TEE Configuration - FIX for Trustonic TEE Binding
+# FIX: TEE Configuration for Trustonic
 # ========================================
 ro.vendor.mtk_tee_gp_support=1
 ro.vendor.mtk_trustonic_tee_support=1
@@ -35,22 +45,19 @@ ro.vendor.trustonic.tee.support=1
 ro.vendor.trustonic.ready=false
 
 # ========================================
-# Keymaster/Keymint - AIDL v3 support
+# FIX: Keymaster/Keymint Configuration
+# AIDL Keymint v3 support for Android 15
 # ========================================
 keymaster_ver=4.1
 ro.hardware.keymaster=trustonic
 ro.hardware.keymint=trustonic
 ro.security.keymint.version=3
-
-# ========================================
-# Trustonic TEE ready flag
-# ========================================
-ro.vendor.trustonic.ready=true
+ro.hardware.keystore=trustonic
+ro.security.keystore.keymaster=v4.1
 
 # ========================================
 # FIX: AVB Bypass Properties
-# These properties help bypass AVB verification
-# for Trustonic TEE compatibility
+# Required for Trustonic TEE to function with unlocked bootloader
 # ========================================
 ro.boot.verifiedbootstate=orange
 ro.boot.flash.locked=0
@@ -58,30 +65,20 @@ ro.boot.vbmeta.device_state=unlocked
 ro.boot.veritymode=enforcing
 
 # ========================================
-# FIX: Keymaster fallback support
-# ========================================
-ro.hardware.keystore=trustonic
-ro.security.keystore.keymaster=v4.1
-
-# ========================================
-# FIX: FBE Configuration
-# ========================================
-ro.crypto.fbe=1
-ro.crypto.fbe_min_api=29
-
-# Vibrator
-ro.vendor.tran.vibrator.option=single
-
-# ========================================
-# FIX: MTK Platform specific
+# FIX: MTK Platform Specific
 # ========================================
 ro.vendor.mtk_platform=mt6897
 ro.vendor.mediatek.platform=mt6897
 ro.board.platform=mt6897
 
 # ========================================
-# FIX: Transsion security services
+# FIX: Transsion Security Services
 # ========================================
 ro.vendor.transsion.security.rpmbsupport=1
 ro.vendor.transsion.security.deviceauthen=2.0
 ro.vendor.transsion.security.hap=1.0
+
+# ========================================
+# Vibrator Configuration
+# ========================================
+ro.vendor.tran.vibrator.option=single

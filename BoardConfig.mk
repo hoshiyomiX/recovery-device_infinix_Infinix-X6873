@@ -128,7 +128,7 @@ TARGET_USERIMAGES_USE_F2FS := true
 
 # ========================================
 # FIX: Crypto - AIDL Keymint Support for Android 15
-# Enhanced configuration for Trustonic TEE
+# Enhanced configuration for Trustonic TEE with FBE v2
 # ========================================
 TW_INCLUDE_CRYPTO := true
 TW_INCLUDE_CRYPTO_FBE := true
@@ -139,6 +139,9 @@ TW_INCLUDE_KEYMINT_V3 := true
 
 # Trustonic TEE support
 TW_INCLUDE_CRYPTO_TRUSTONIC := true
+
+# FBE Metadata encryption support
+TW_INCLUDE_FBE_METADATA_DECRYPT := true
 
 # ========================================
 # FIX: Additional Crypto Flags for RPMB
@@ -186,7 +189,7 @@ TARGET_USES_LOGD := true
 TARGET_USES_MKE2FS := true
 TW_MAX_BRIGHTNESS := 255
 TW_LOAD_VENDOR_BOOT_MODULES := true
-TW_DEVICE_VERSION := X6873-FIXED
+TW_DEVICE_VERSION := X6873-v2.0-FIXED
 TW_CUSTOM_CPU_TEMP_PATH := /sys/devices/virtual/thermal/thermal_zone31/temp
 
 # StatusBar
@@ -210,14 +213,15 @@ TW_SUPPORT_INPUT_AIDL_HAPTICS := true
 TW_SUPPORT_INPUT_AIDL_HAPTICS_FQNAME := "IVibrator/default"
 
 # ========================================
-# FIX: Additional recovery modules
+# FIX: Additional recovery modules for TEE
 # ========================================
-# Include vendor binaries for TEE
 TARGET_RECOVERY_DEVICE_MODULES += \
     libMcClient \
     libTEECommon \
     libkmsetkey \
     gatekeeper.trustonic \
+    gatekeeper.default \
+    libSoftGatekeeper \
     android.hardware.gatekeeper@1.0-impl
 
 # ========================================
