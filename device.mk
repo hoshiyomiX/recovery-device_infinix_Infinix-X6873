@@ -475,3 +475,29 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/bin/kmsetkey_ca.trustonic:vendor/bin/kmsetkey_ca.trustonic \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libkmsetkey.so:vendor/lib64/libkmsetkey.so
+
+# Copy USB HAL Binaries for OTG support
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/android.hardware.usb-aidl-service.mediatekv1.0:vendor/bin/hw/android.hardware.usb-aidl-service.mediatekv1.0 \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/android.hardware.usb.gadget-aidl-service.mediatekv1.0:vendor/bin/hw/android.hardware.usb.gadget-aidl-service.mediatekv1.0
+
+# Copy USB HAL Libraries
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.usb-V1-ndk.so:vendor/lib64/android.hardware.usb-V1-ndk.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.usb.gadget-V1-ndk.so:vendor/lib64/android.hardware.usb.gadget-V1-ndk.so
+
+# Copy Vibrator HAL Binary
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/android.hardware.vibrator-service.mediatek:vendor/bin/hw/android.hardware.vibrator-service.mediatek
+
+# Copy Vibrator HAL Libraries
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.vibrator-V2-ndk.so:vendor/lib64/android.hardware.vibrator-V2-ndk.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/hw/vibrator.default.so:vendor/lib64/hw/vibrator.default.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libaacvibrator.so:vendor/lib64/libaacvibrator.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libvibratorutils.so:vendor/lib64/libvibratorutils.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.aac.hardware.richtap.vibrator-V1-ndk.so:vendor/lib64/vendor.aac.hardware.richtap.vibrator-V1-ndk.so
+
+# Copy Vibrator Config
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/etc/aac_richtap.config:vendor/etc/aac_richtap.config

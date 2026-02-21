@@ -1,10 +1,13 @@
 import /init.tee.rc
-import /init.device.rc
-import /init.vibrator.rc
+import /init.recovery.usb.rc
 
 on init
     export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
     setprop crypto.ready 1
+    
+    # USB controller setup
+    setprop sys.usb.controller 112b0000.dwc3
+    setprop sys.usb.configfs 1
 
 on fs
     install_keyring
@@ -33,6 +36,9 @@ on post-fs
 
 on boot
     start mtk.plpath.utils.link
+    start vendor.usb_hal
+    start vendor.usb_gadget_hal
+    start vendor.vibrator_hal
 
 on property:persist.vendor.mtk.pl_lnk=1
     symlink /dev/block/mapper/pl_a /dev/block/by-name/preloader_raw_a
@@ -201,3 +207,38 @@ on post-fs-data
     mkdir /data/vendor_de/0/cryptoeng 0770 system system
 
     start health-hal-2-1
+
+# USB HAL Service for OTG support
+service vendor.usb_hal /vendor/bin/hw/android.hardware.usb-aidl-service.mediatekv1.0
+    class hal
+    user system
+    group system
+    disabled
+    seclabel u:r:recovery:s0
+
+# USB Gadget HAL Service
+service vendor.usb_gadget_hal /vendor/bin/hw/android.hardware.usb.gadget-aidl-service.mediatekv1.0
+    class hal
+    user system
+    group system mtp shell
+    disabled
+    seclabel u:r:recovery:s0
+
+# Vibrator HAL Service
+service vendor.vibrator_hal /vendor/bin/hw/android.hardware.vibrator-service.mediatek
+    class hal
+    user system
+    group system
+    setenv RICHTAP_DEVICE_PATH /dev/aw8697_haptic
+    setenv ENV_RICHTAP_CONFIG_PATH /vendor/etc/aac_richtap.config
+    disabled
+    seclabel u:r:recovery:s0
+
+# USB OTG mode switching
+on property:sys.usb.config=adb && property:sys.usb.configfs=1
+    start vendor.usb_hal
+    start vendor.usb_gadget_hal
+
+on property:sys.usb.config=mtp,adb && property:sys.usb.configfs=1
+    start vendor.usb_hal
+    start vendor.usb_gadget_hal

@@ -1,8 +1,18 @@
 # Fstab
 ro.postinstall.fstab.prefix=/system
 
-# USB MTP
+# USB Configuration
 ro.sys.usb.storage.type=mtp
+ro.sys.usb.mtp.whql.enable=0
+ro.sys.usb.mtp.device_type=3
+
+# Recovery USB IDs
+ro.recovery.usb.vid=18D1
+ro.recovery.usb.adb.pid=D001
+ro.recovery.usb.fastboot.pid=4EE0
+
+# USB Controller
+sys.usb.controller=112b0000.dwc3
 
 # Crypto
 ro.crypto.volume.filenames_mode=aes-256-cts
@@ -22,3 +32,6 @@ ro.security.keymint.version=3
 
 # Trustonic TEE ready flag
 ro.vendor.trustonic.ready=true
+
+# Vibrator
+ro.vendor.tran.vibrator.option=single

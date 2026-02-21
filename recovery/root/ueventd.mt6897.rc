@@ -106,7 +106,7 @@
 /dev/mddp                 0660   system     system
 
 # add the read write right of ttyUSB*
-/dev/bus/usb/*     	  0660   root       usb
+/dev/bus/usb/*            0660   root       usb
 /dev/ttyUSB0              0660   radio      radio
 /dev/ttyUSB1              0660   radio      radio
 /dev/ttyUSB2              0660   radio      radio
@@ -194,3 +194,11 @@
 
 #MTK In-House TEE
 /dev/ttyACM0              0660   radio      radio
+
+# Haptic/Vibrator devices
+/dev/aw8697_haptic        0660   system     system
+/dev/vibrator             0660   system     system
+/dev/haptic_engine        0660   system     system
+
+# USB gadget/configfs
+/config/usb_gadget/*      0660   shell      system
