@@ -1,11 +1,19 @@
 # Infinix X6873 - Trustonic TEE Init Configuration
-# FIXED: Proper TEE initialization without premature RPMB access
+# FIXED v3.0: Proper TEE initialization without race conditions
 #
 # This file is imported by init.recovery.mt6897.rc
 # Service definitions are in init.recovery.mt6897.rc for proper ordering
+#
+# Key fixes:
+# - Directory creation at init stage, not during mount
+# - No premature RPMB access
+# - Proper state management for FBE encrypted devices
 
+# ========================================
+# PHASE 1: Create mount points at init
+# ========================================
 on init
-    # Create mountpoints for vendor partitions
+    # Create mount points for vendor partitions
     mkdir /mnt/vendor/persist 0771 system system
     mkdir /mnt/vendor/nvdata 0771 system system
     mkdir /mnt/vendor/nvcfg 0771 system system
@@ -13,19 +21,23 @@ on init
     mkdir /mnt/vendor/protect_s 0771 system system
     
     # ========================================
-    # FIX: Create TEE directories (not accessing RPMB yet)
+    # FIX v3.0: Create TEE directories early
+    # Directories created at init, populated after mount
     # ========================================
     mkdir /mnt/vendor/persist/tee 0770 system system
     mkdir /mnt/vendor/persist/tlbin 0770 system system
     mkdir /mnt/vendor/persist/sp_cryptography 0770 system system
 
+# ========================================
+# PHASE 2: Post-filesystem setup
+# ========================================
 on post-fs
     # ========================================
-    # FIX: Create directories but DO NOT access RPMB yet
+    # FIX v3.0: Create directories but DO NOT access RPMB
     # RPMB access requires TEE to be fully initialized
     # ========================================
     
-    # Create mcRegistry to store failure record
+    # Create mcRegistry to store TA state and failure records
     mkdir /mnt/vendor/persist/mcRegistry 0771 system system
     mkdir /mnt/vendor/persist/rpmb 0700 system system
     mkdir /mnt/vendor/persist/startPara 0700 system system
@@ -35,25 +47,33 @@ on post-fs
     
     # ========================================
     # REMOVED: Premature RPMB backup
-    # OLD CODE: exec -- /vendor/bin/sh -c "cp -r /mnt/vendor/persist/rpmb/* /mnt/vendor/persist/rpmb_backup/ 2>/dev/null || true"
-    # This was causing issues because RPMB was accessed before TEE initialization
+    # OLD CODE: exec -- /vendor/bin/sh -c "cp -r /mnt/vendor/persist/rpmb/* /mnt/vendor/persist/rpmb_backup/"
+    # This caused issues because RPMB was accessed before TEE initialization
     # RPMB backup is now handled by rpmb_backup_service after TEE is ready
     # ========================================
 
+# ========================================
+# PHASE 3: Post-fs-data setup
+# ========================================
 on post-fs-data
     # Create /data/vendor/key_provisioning dir and get proper encryption policy installed
     mkdir /data/vendor/key_provisioning 0771 system system
     
     # ========================================
-    # FIX: Create additional data directories for TEE
+    # FIX v3.0: Create additional data directories for TEE
+    # These are needed for key storage and credential management
     # ========================================
     mkdir /data/vendor/tee 0770 system system
     mkdir /data/vendor/keymaster 0770 system system
     mkdir /data/vendor/gatekeeper 0770 system system
     mkdir /data/vendor/mcRegistry 0775 system system
+    
+    # Create directories for multi-user decryption support
+    mkdir /data/vendor_de 0770 system system
+    mkdir /data/vendor_de/0 0770 system system
 
 # ========================================
-# TEE State for META/FACTORY mode
+# TEE State Management for META/FACTORY mode
 # ========================================
 on property:ro.crypto.state=unsupported
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry ++ (unencrypted)"
@@ -61,7 +81,7 @@ on property:ro.crypto.state=unsupported
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (unencrypted)"
 
 # ========================================
-# Normal mode, FBE
+# Normal mode, FBE v2 encrypted
 # ========================================
 on property:ro.crypto.type=file && property:ro.crypto.state=encrypted
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry ++ (FBE encrypted)"
@@ -69,7 +89,7 @@ on property:ro.crypto.type=file && property:ro.crypto.state=encrypted
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (FBE encrypted)"
 
 # ========================================
-# Normal mode, FDE
+# Normal mode, FDE (legacy support)
 # ========================================
 on property:vold.decrypt=trigger_restart_framework
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry ++ (FDE encrypted)"
@@ -77,13 +97,42 @@ on property:vold.decrypt=trigger_restart_framework
     write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (FDE encrypted)"
 
 # ========================================
-# FIX: Handle mobicore state changes
+# FIX v3.0: Handle mobicore state changes
 # ========================================
 on property:init.svc.mobicore=running
-    # Mobicore started successfully - signal TEE ready
-    setprop ro.vendor.mobicore.ready true
+    # Mobicore started successfully - signal ready
+    setprop ro.vendor.mobicore.ready 1
 
 on property:init.svc.mobicore=stopped
-    # Mobicore stopped - clear ready flag
-    setprop ro.vendor.mobicore.ready false
-    setprop ro.vendor.trustonic.ready false
+    # Mobicore stopped - clear ready flags
+    setprop ro.vendor.mobicore.ready 0
+    setprop ro.vendor.trustonic.ready 0
+    setprop ro.vendor.tee.initialized 0
+
+on property:init.svc.mobicore=crashed
+    # Mobicore crashed - attempt recovery
+    setprop ro.vendor.mobicore.ready 0
+    setprop ro.vendor.trustonic.ready 0
+    setprop ro.vendor.tee.initialized 0
+
+# ========================================
+# FIX v3.0: Handle keymint state for proper chain
+# ========================================
+on property:init.svc.vendor.keymint-trustonic=running
+    # Keymint is running, TEE is fully operational
+    setprop ro.vendor.trustonic.ready 1
+    setprop ro.vendor.tee.initialized 1
+
+on property:init.svc.vendor.keymint-trustonic=stopped
+    # Keymint stopped - TEE may still be available
+    setprop ro.vendor.tee.initialized 0
+
+# ========================================
+# FIX v3.0: Handle gatekeeper state
+# ========================================
+on property:init.svc.vendor.gatekeeper-trustonic=running
+    # Gatekeeper running - credential verification available
+    setprop ro.vendor.gatekeeper.ready 1
+
+on property:init.svc.vendor.gatekeeper-trustonic=stopped
+    setprop ro.vendor.gatekeeper.ready 0

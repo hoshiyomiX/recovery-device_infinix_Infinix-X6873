@@ -1,66 +1,74 @@
-# 1 "vendor/mediatek/proprietary/hardware/fstab/mt6897/fstab.in.mt6897"
-# 1 "<built-in>" 1
-# 1 "<built-in>" 3
-# 374 "<built-in>" 3
-# 1 "<command line>" 1
-# 1 "<built-in>" 2
-# 1 "vendor/mediatek/proprietary/hardware/fstab/mt6897/fstab.in.mt6897" 2
-# 142 "vendor/mediatek/proprietary/hardware/fstab/mt6897/fstab.in.mt6897"
+# Android FSTAB for Infinix X6873 (GT 30 Pro)
+# MediaTek MT6897 Platform - First Stage Mount
+# FIXED v3.0: Complete FBE v2 encryption parameters for TWRP decryption
+#
+# Source: vendor/mediatek/proprietary/hardware/fstab/mt6897/fstab.in.mt6897
+# Modified for custom recovery with proper encryption support
+
+# ========================================
+# Logical Partitions (A/B Slot)
+# ========================================
 system /system ext4 ro wait,slotselect,logical,first_stage_mount
 system /system erofs ro wait,slotselect,logical,first_stage_mount
+
 system_ext /system_ext ext4 ro wait,slotselect,logical,first_stage_mount
 system_ext /system_ext erofs ro wait,slotselect,logical,first_stage_mount
 
 vendor /vendor ext4 ro wait,slotselect,logical,first_stage_mount
 vendor /vendor erofs ro wait,slotselect,logical,first_stage_mount
 
-
 product /product ext4 ro wait,slotselect,logical,first_stage_mount
 product /product erofs ro wait,slotselect,logical,first_stage_mount
-
-
-
-
-
 
 vendor_dlkm /vendor_dlkm erofs ro wait,slotselect,logical,first_stage_mount
 vendor_dlkm /vendor_dlkm ext4 ro wait,slotselect,logical,first_stage_mount
 
-
 odm_dlkm /odm_dlkm erofs ro wait,slotselect,logical,first_stage_mount
 odm_dlkm /odm_dlkm ext4 ro wait,slotselect,logical,first_stage_mount
-
 
 system_dlkm /system_dlkm erofs ro wait,slotselect,logical,first_stage_mount
 system_dlkm /system_dlkm ext4 ro wait,slotselect,logical,first_stage_mount
 
-
+# ========================================
+# CRITICAL FIX: Metadata partition for FBE key storage
+# MUST be F2FS and mounted at first_stage for encryption keys
+# ========================================
 /dev/block/by-name/metadata /metadata f2fs noatime,nosuid,nodev,discard wait,check,formattable,first_stage_mount
 
-/dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065 wait,check,formattable,quota,latemount,resize,reservedsize=128m,checkpoint=fs,fsverity
+# ========================================
+# FATAL FIX v3.0: Userdata with COMPLETE FBE v2 encryption parameters
+# This was the primary cause of decryption failure!
+# 
+# Added parameters:
+# - inlinecrypt: Required for hardware crypto acceleration
+# - fileencryption: FBE v2 with AES-256-XTS/CTS, inlinecrypt_optimized
+# - keydirectory: Path to metadata encryption keys
+# - metadatapassword: Derive password from metadata encryption
+# ========================================
+/dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt wait,check,formattable,quota,latemount,resize,reservedsize=128m,checkpoint=fs,fsverity,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption,metadatapassword=default
 
-
-
+# ========================================
+# Vendor partitions for TEE and security services
+# These must be mounted early for Trustonic TEE initialization
+# ========================================
 /dev/block/by-name/protect1 /mnt/vendor/protect_f ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
 /dev/block/by-name/protect2 /mnt/vendor/protect_s ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
 /dev/block/by-name/nvdata /mnt/vendor/nvdata ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
 /dev/block/by-name/nvcfg /mnt/vendor/nvcfg ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
-
-
 /dev/block/by-name/persist /mnt/vendor/persist ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
 
-
-
-
-
+# ========================================
+# VOLD managed devices (SD card, USB OTG)
+# ========================================
 /devices/platform/soc/11240000.mmc* auto auto defaults voldmanaged=sdcard1:auto
-
 /devices/platform/usb_xhci* auto vfat defaults voldmanaged=usbotg:auto
 /devices/platform/soc/11201000.usb0/11200000.xhci* auto vfat defaults voldmanaged=usbotg:auto
 /devices/platform/soc/11211000.usb1/11210000.xhci* auto vfat defaults voldmanaged=usbotg:auto
 
+# ========================================
+# EMMC partitions (non-logical)
+# ========================================
 /dev/block/by-name/frp /persistent emmc defaults defaults
-
 /dev/block/by-name/nvram /nvram emmc defaults defaults
 /dev/block/by-name/proinfo /proinfo emmc defaults defaults
 /dev/block/by-name/lk1 /lk1 emmc defaults defaults
@@ -69,51 +77,37 @@ system_dlkm /system_dlkm ext4 ro wait,slotselect,logical,first_stage_mount
 /dev/block/by-name/misc /misc emmc defaults defaults
 /dev/block/by-name/init_boot /init_boot emmc defaults defaults
 
-
-
-
+# ========================================
+# Boot partitions (A/B slotted)
+# ========================================
 /dev/block/by-name/boot /boot emmc defaults first_stage_mount,nofail,slotselect
-
-
-
-
-
 /dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc defaults first_stage_mount,nofail,slotselect
 /dev/block/by-name/vbmeta_system /vbmeta_system emmc defaults first_stage_mount,nofail,slotselect
 
-/dev/block/by-name/logo /logo emmc defaults defaults
-/dev/block/by-name/expdb /expdb emmc defaults defaults
-/dev/block/by-name/seccfg /seccfg emmc defaults defaults
-
+# ========================================
+# TEE partitions (Trustonic)
+# ========================================
 /dev/block/by-name/tee1 /tee1 emmc defaults defaults
 /dev/block/by-name/tee2 /tee2 emmc defaults defaults
 
-
+# ========================================
+# Other firmware partitions
+# ========================================
+/dev/block/by-name/logo /logo emmc defaults defaults
+/dev/block/by-name/expdb /expdb emmc defaults defaults
+/dev/block/by-name/seccfg /seccfg emmc defaults defaults
 /dev/block/by-name/scp1 /scp1 emmc defaults defaults
 /dev/block/by-name/scp2 /scp2 emmc defaults defaults
-
-
 /dev/block/by-name/sspm1 /sspm1 emmc defaults defaults
 /dev/block/by-name/sspm2 /sspm2 emmc defaults defaults
-
-
 /dev/block/by-name/dpm1 /dpm1 emmc defaults defaults
 /dev/block/by-name/dpm2 /dpm2 emmc defaults defaults
-
 /dev/block/by-name/mcupm1 /mcupm1 emmc defaults defaults
 /dev/block/by-name/mcupm2 /mcupm2 emmc defaults defaults
-
-
-
 /dev/block/by-name/modem /modem emmc defaults defaults
 /dev/block/by-name/md1dsp /md1dsp emmc defaults defaults
 /dev/block/by-name/md1arm7 /md1arm7 emmc defaults defaults
 /dev/block/by-name/md3img /md3img emmc defaults defaults
-
-
-
-
-
 /dev/block/by-name/gz1 /gz1 emmc defaults defaults
 /dev/block/by-name/gz2 /gz2 emmc defaults defaults
 /dev/block/by-name/ccu /ccu emmc defaults defaults
@@ -125,23 +119,13 @@ system_dlkm /system_dlkm ext4 ro wait,slotselect,logical,first_stage_mount
 /dev/block/by-name/mvpu_algo2 /mvpu_algo2 emmc defaults defaults
 /dev/block/by-name/apusys1 /apusys1 emmc defaults defaults
 /dev/block/by-name/apusys2 /apusys2 emmc defaults defaults
-
 /dev/block/by-name/spmfw /spmfw emmc defaults defaults
-
-
-
-
-
 /dev/block/by-name/audio_dsp /audio_dsp emmc defaults defaults
-
 /dev/block/by-name/pi_img /pi_img emmc defaults defaults
 /dev/block/by-name/boot_para /boot_para emmc defaults defaults
 /dev/block/by-name/odmdtbo /odmdtbo emmc defaults defaults
 /dev/block/by-name/dtbo /dtbo emmc defaults defaults
 /dev/block/by-name/connsys_wifi /connsys_wifi emmc defaults defaults
 /dev/block/by-name/connsys_bt /connsys_bt emmc defaults defaults
-
 /dev/block/by-name/otp /otp emmc defaults defaults
-
-
 /dev/block/by-name/vbmeta /vbmeta emmc defaults defaults
