@@ -95,6 +95,7 @@ service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymin
     interface android.hardware.keymaster@4.0::IKeymasterDevice default
     interface android.hardware.keymaster@4.1::IKeymasterDevice default
     interface android.hardware.security.keymint.IKeyMintDevice/default
+    interface android.hardware.security.keymint.IRemotelyProvisionedComponent/default
     interface android.hardware.security.sharedsecret.ISharedSecret/default
     interface android.hardware.security.secureclock.ISecureClock/default
     user root
