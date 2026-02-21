@@ -442,3 +442,25 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/bin/kmsetkey_ca.trustonic:vendor/bin/kmsetkey_ca.trustonic \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libkmsetkey.so:vendor/lib64/libkmsetkey.so
+
+# Copy Transsion Security Service Binaries
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/vendor.transsion.hardware.security.deviceauthen@2.0-service:vendor/bin/hw/vendor.transsion.hardware.security.deviceauthen@2.0-service \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/vendor.transsion.hardware.security.hap@1.0-service:vendor/bin/hw/vendor.transsion.hardware.security.hap@1.0-service \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/vendor.transsion.hardware.security.rpmbservice@1.0-service:vendor/bin/hw/vendor.transsion.hardware.security.rpmbservice@1.0-service \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/vendor.transsion.hardware.security.trancriticalparavfy@1.0-service:vendor/bin/hw/vendor.transsion.hardware.security.trancriticalparavfy@1.0-service
+
+# Copy Transsion Security Libraries
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.transsion.hardware.security.deviceauthen@2.0.so:vendor/lib64/vendor.transsion.hardware.security.deviceauthen@2.0.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.transsion.hardware.security.hap-V1-ndk.so:vendor/lib64/vendor.transsion.hardware.security.hap-V1-ndk.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.transsion.hardware.security.rpmbservice@1.0.so:vendor/lib64/vendor.transsion.hardware.security.rpmbservice@1.0.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.transsion.hardware.security.trancriticalparavfy@1.0.so:vendor/lib64/vendor.transsion.hardware.security.trancriticalparavfy@1.0.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libdeviceauthen.so:vendor/lib64/libdeviceauthen.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libhyperion_hap_ca.so:vendor/lib64/libhyperion_hap_ca.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/hw/paytrigger.trustonic.so:vendor/lib64/hw/paytrigger.trustonic.so
+
+# Copy kmsetkey binary
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/kmsetkey_ca.trustonic:vendor/bin/kmsetkey_ca.trustonic \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libkmsetkey.so:vendor/lib64/libkmsetkey.so
