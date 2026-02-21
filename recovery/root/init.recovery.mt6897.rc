@@ -52,6 +52,15 @@ on init
     setprop ro.hardware.keymaster trustonic
     setprop ro.hardware.keymint trustonic
     setprop ro.security.keymint.version 3
+    
+    # ========================================
+    # NEW v4.0: Automatic TA Update Properties
+    # ========================================
+    setprop ro.vendor.ta.ready 0
+    setprop ro.vendor.ta.updated 0
+    setprop ro.vendor.ta.update_failed 0
+    setprop ro.vendor.ta.check_running 0
+    setprop ro.vendor.ta.status unknown
 
 # ========================================
 # PHASE 2: Filesystem preparation
@@ -171,6 +180,19 @@ service mtk.plpath.utils.link /system/bin/mtk_plpath_utils
 # Load mcDrvModule BEFORE starting TEE daemon
 # ========================================
 service tee_module_loader /vendor/bin/sh -c "insmod /vendor/lib/modules/mcDrvModule-ffa.ko 2>/dev/null || true"
+    class core
+    user root
+    group root system
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+# ========================================
+# NEW v4.0: Automatic TA Update Check Service
+# Runs BEFORE TEE kernel module to detect and fix TA mismatch
+# This improves decryption success rate after firmware updates
+# ========================================
+service ta_auto_check /vendor/bin/ta_auto_update.sh
     class core
     user root
     group root system
@@ -338,34 +360,39 @@ service rpmb_backup_service /vendor/bin/sh -c "cp -r /mnt/vendor/persist/rpmb/* 
     seclabel u:r:recovery:s0
 
 # ========================================
-# FIX v3.0: Service Start Triggers - PROPER ORDER
+# FIX v4.0: Service Start Triggers - PROPER ORDER
 # Eliminates race conditions with explicit dependencies
+# NEW: TA auto-check runs BEFORE TEE module load
 # ========================================
 
-# STEP 1: Load TEE kernel module when partitions ready
+# STEP 1: Start TA auto-check when partitions ready (BEFORE TEE init)
 on property:crypto.ready=1
+    start ta_auto_check
+
+# STEP 2: Load TEE kernel module after TA check complete
+on property:ro.vendor.ta.ready=1
     start tee_module_loader
 
-# STEP 2: Start TEE services after module loaded
+# STEP 3: Start TEE services after module loaded
 on property:init.svc.tee_module_loader=stopped
     start vendor.trustonic-tee
     start mobicore
 
-# STEP 3: Signal TEE ready when mobicore running
+# STEP 4: Signal TEE ready when mobicore running
 on property:init.svc.mobicore=running
     # Wait a moment for TEE to stabilize
     setprop ro.vendor.mobicore.ready 1
 
-# STEP 4: Start keymint when mobicore is ready
+# STEP 5: Start keymint when mobicore is ready
 on property:ro.vendor.mobicore.ready=1
     start vendor.keymint-trustonic
 
-# STEP 5: Signal TEE fully initialized when keymint running
+# STEP 6: Signal TEE fully initialized when keymint running
 on property:init.svc.vendor.keymint-trustonic=running
     setprop ro.vendor.trustonic.ready 1
     setprop ro.vendor.tee.initialized 1
 
-# STEP 6: Start gatekeeper and verification when TEE fully ready
+# STEP 7: Start gatekeeper and verification when TEE fully ready
 on property:ro.vendor.tee.initialized=1
     start vendor.gatekeeper-trustonic
     start vendor.rpmbservice

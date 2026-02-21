@@ -53,6 +53,18 @@ ro.vendor.mobicore.ready=0
 ro.vendor.tee.initialized=0
 
 # ========================================
+# NEW v4.0: Automatic TA Update Configuration
+# ========================================
+ro.vendor.ta.ready=0
+ro.vendor.ta.updated=0
+ro.vendor.ta.update_failed=0
+ro.vendor.ta.check_running=0
+ro.vendor.ta.status=unknown
+ro.vendor.ta.auto_update.enabled=1
+ro.vendor.ta.update.threshold=3
+ro.vendor.ta.backup.max=5
+
+# ========================================
 # FIX v3.0: Keymaster/Keymint Configuration
 # AIDL Keymint v3 support for Android 15
 # ========================================

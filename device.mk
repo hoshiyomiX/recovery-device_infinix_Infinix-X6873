@@ -452,6 +452,7 @@ PRODUCT_COPY_FILES += \
 # Copy kmsetkey for Keymint Keybox Support
 PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/bin/kmsetkey_ca.trustonic:vendor/bin/kmsetkey_ca.trustonic \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/ta_auto_update.sh:vendor/bin/ta_auto_update.sh \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libkmsetkey.so:vendor/lib64/libkmsetkey.so
 
 # Copy Transsion Security Service Binaries
