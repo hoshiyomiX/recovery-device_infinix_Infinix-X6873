@@ -65,13 +65,25 @@ service mtk.plpath.utils.link /system/bin/mtk_plpath_utils
     disabled
     seclabel u:r:recovery:s0
 
-service vendor.gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper@1.0-service
+# Trustonic TEE Service - must start first
+service vendor.trustonic-tee /vendor/bin/hw/vendor.trustonic.tee@1.1-service
+    class hal
+    user root
+    group root system
+    disabled
+    seclabel u:r:recovery:s0
+
+# Gatekeeper Service - Trustonic version
+service vendor.gatekeeper-trustonic /vendor/bin/hw/android.hardware.gatekeeper-service.trustonic
+    class early_hal
     interface android.hardware.gatekeeper@1.0::IGatekeeper default
+    interface android.hardware.gatekeeper.IGatekeeper/default
     user root
     group root
     disabled
     seclabel u:r:recovery:s0
 
+# Keymint Service - Trustonic version
 service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustonic
     class early_hal
     interface android.hardware.keymaster@4.0::IKeymasterDevice default
@@ -79,36 +91,50 @@ service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymin
     interface android.hardware.security.keymint.IKeyMintDevice/default
     interface android.hardware.security.sharedsecret.ISharedSecret/default
     interface android.hardware.security.secureclock.ISecureClock/default
-    user nobody
+    user root
+    group root system
+    disabled
     seclabel u:r:recovery:s0
 
+# Start services when crypto is ready
 on property:crypto.ready=1
+    start vendor.trustonic-tee
     start vendor.keymint-trustonic
 
+# Start services when hwservicemanager is ready
 on property:hwservicemanager.ready=true
     start mobicore
-    start vendor.gatekeeper-1-0
+    start vendor.trustonic-tee
+    start vendor.gatekeeper-trustonic
     start vendor.keymint-trustonic
+
+# Gatekeeper starts after Trustonic TEE is ready
+on property:ro.vendor.trustonic.ready=true
+    start vendor.gatekeeper-trustonic
 
 on property:ro.crypto.state=unsupported
     stop mobicore
-    stop vendor.gatekeeper-1-0
+    stop vendor.gatekeeper-trustonic
     stop vendor.keymint-trustonic
+    stop vendor.trustonic-tee
 
 on property:ro.crypto.state=unencrypted
     stop mobicore
-    stop vendor.gatekeeper-1-0
+    stop vendor.gatekeeper-trustonic
     stop vendor.keymint-trustonic
+    stop vendor.trustonic-tee
 
 on property:twrp.decrypt.done=true
     stop mobicore
-    stop vendor.gatekeeper-1-0
+    stop vendor.gatekeeper-trustonic
     stop vendor.keymint-trustonic
+    stop vendor.trustonic-tee
 
 on property:crypto.ready=0
     stop mobicore
-    stop vendor.gatekeeper-1-0
+    stop vendor.gatekeeper-trustonic
     stop vendor.keymint-trustonic
+    stop vendor.trustonic-tee
 
 on post-fs-data
     mkdir /data/vendor_de 0770 system system
@@ -116,4 +142,3 @@ on post-fs-data
     mkdir /data/vendor_de/0/cryptoeng 0770 system system
 
     start health-hal-2-1
-

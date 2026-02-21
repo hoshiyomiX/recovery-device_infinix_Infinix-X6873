@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="GitGud.io - 404 Not Found" />
+		<title>404 NOT FOUND - GitGud.io</title>
+		<link
+			rel="icon"
+			type="image/svg+xml"
+			href="https://about.gitgud.io/favicon.svg"
+		/>
+		<meta property="og:title" content="GitGud.io - Free Git Hosting" />
+		<meta property="og:site_name" content="GitGud.io - Free Git Hosting" />
+		<meta
+			property="og:description"
+			content="Free and fast Git hosting by Sapphire, powered by GitLab."
+		/>
+		<meta property="og:url" content="https://gitgud.io" />
+		<meta property="og:type" content="website" />
+		<meta
+			property="og:image"
+			content="https://about.gitgud.io/img/gitgud-social-v2026.1.png"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary" />
+		<meta
+			name="twitter:image"
+			content="https://about.gitgud.io/img/gitgud-social-v2026.1.png"
+		/>
+		<link rel="stylesheet" href="https://about.gitgud.io/css/main.css" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="preload"
+			href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbV2o-flEEny0FZhsfKu5WU4xD2OwG_TA.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<script
+			async
+			defer
+			src="https://u.servers.moe/script.js"
+			data-website-id="d8d4eb96-da30-4d70-ae3b-c499dcde957f"
+		></script>
+		<!-- Boxicons -->
+		<link
+			href="https://cdn.boxicons.com/3.0.8/fonts/basic/boxicons.min.css"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://cdn.boxicons.com/3.0.8/fonts/filled/boxicons-filled.min.css"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://cdn.boxicons.com/3.0.8/fonts/brands/boxicons-brands.min.css"
+			rel="stylesheet"
+		/>
+	</head>
+	<body>
+		<header>
+			<nav>
+				<div class="logo-status-group">
+					<a href="https://about.gitgud.io" class="logo">
+						<span class="logo-text">GitGud<span>.io</span></span>
+					</a>
+					<a
+						href="https://status.sapphire.moe"
+						target="_blank"
+						class="header-status"
+					>
+						<span class="status-dot" id="status-dot"></span>
+						<span id="status-text">[INITIALIZING...]</span>
+					</a>
+				</div>
+				<button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+					[MENU]
+				</button>
+				<ul class="nav-links" id="nav-links">
+					<li><a href="https://gitgud.io">/home</a></li>
+					<li><a href="https://gitgud.io/explore">/explore</a></li>
+					<li>
+						<a
+							href="https://discord.gg/ytNVJZE"
+							target="_blank"
+							class="nav-purple"
+							>/discord</a
+						>
+					</li>
+				</ul>
+			</nav>
+		</header>
+
+		<section class="error-page">
+			<div class="error-code code-404">404</div>
+			<h1 class="error-title">NOT FOUND</h1>
+			<p class="error-message">
+				The page you're looking for doesn't exist or has been moved.
+			</p>
+
+			<div class="error-terminal">
+				<div class="terminal-window">
+					<div class="terminal-header">
+						<div class="terminal-button close"></div>
+						<div class="terminal-button minimize"></div>
+						<div class="terminal-button maximize"></div>
+					</div>
+					<div class="terminal-content">
+						<div class="terminal-line">
+							<span class="terminal-prompt">root@gitgud:~#</span>
+							<span class="terminal-command">ls -la</span>
+						</div>
+						<div class="terminal-line terminal-output">
+							<span
+								style="
+									color: var(--brand-purple-bright);
+									font-weight: 600;
+									padding: 0 0.25em;
+								"
+								>404_NOT_FOUND</span
+							>
+							- The requested resource was not found
+						</div>
+						<div class="terminal-line terminal-output">
+							/requested/path ->
+							<span
+								style="
+									color: var(--status-error);
+									padding: 0 0.25em;
+								"
+								>NULL</span
+							>
+						</div>
+						<div class="terminal-line">
+							<span class="terminal-prompt">root@gitgud:~#</span>
+							<span class="terminal-command"
+								>grep -r "your_page" /</span
+							>
+						</div>
+						<div class="terminal-line terminal-output">
+							FILE_NOT_FOUND - Maybe it moved? Maybe it never
+							existed?
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="error-links">
+				<a href="https://gitgud.io" class="btn btn-primary"
+					>[GO HOME]</a
+				>
+				<a href="https://gitgud.io/explore" class="btn btn-secondary"
+					>[EXPLORE REPOS]</a
+				>
+				<a
+					href="https://discord.gg/ytNVJZE"
+					target="_blank"
+					class="btn btn-purple"
+					>[ <i class="bxl bx-discord-alt"></i> ] JOIN DISCORD</a
+				>
+			</div>
+
+			<div class="error-info">
+				<h3>Common Reasons for 404 Errors:</h3>
+				<p>The page may have been moved or deleted</p>
+				<p>The URL might be typed incorrectly</p>
+				<p>The repository or project may have been renamed</p>
+				<p>You might not have access to the requested resource</p>
+				<p style="margin-top: 1rem">
+					Looking for something specific?
+					<a href="https://gitgud.io/explore">Explore repositories</a>
+					or
+					<a href="https://discord.gg/ytNVJZE" target="_blank"
+						>ask in Discord</a
+					>
+				</p>
+			</div>
+		</section>
+
+		<footer>
+			<div class="container">
+				<div>
+					<h4>GitGud.io</h4>
+					<p>Free GitLab hosting // Developer-centric</p>
+				</div>
+				<div>
+					<h4>Quick Links</h4>
+					<ul>
+						<li><a href="https://gitgud.io">/home</a></li>
+						<li>
+							<a href="https://gitgud.io/explore">/explore</a>
+						</li>
+						<li>
+							<a href="https://status.sapphire.moe">/status</a>
+						</li>
+					</ul>
+				</div>
+				<div>
+					<h4>Community</h4>
+					<ul>
+						<li>
+							<a href="https://discord.gg/ytNVJZE" target="_blank"
+								>/discord</a
+							>
+						</li>
+						<li><a href="mailto:admin@gitgud.io">/email</a></li>
+					</ul>
+				</div>
+				<div>
+					<h4>Contact</h4>
+					<ul>
+						<li>
+							<a href="mailto:admin@gitgud.io">admin@gitgud.io</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="footer-bottom">
+				&copy; 2026 GitGud.io // Powered by GitLab // Hosted by Sapphire
+			</div>
+		</footer>
+
+		<script src="https://about.gitgud.io/js/main.js"></script>
+	</body>
+</html>

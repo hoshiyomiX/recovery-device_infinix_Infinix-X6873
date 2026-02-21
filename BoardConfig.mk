@@ -121,15 +121,14 @@ TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
 
-# Crypto - AIDL Keymint Support
+# Crypto - AIDL Keymint Support for Android 15
 TW_INCLUDE_CRYPTO := true
 TW_INCLUDE_CRYPTO_FBE := true
 TW_USE_FSCRYPT_POLICY := 2
-TW_FORCE_KEYMASTER_VER := true
-TW_SUPPORT_KEYMASTER_V4_1 := true
-TW_USE_KEYMASTER_V4 := true
-# AIDL Keymint support for Android 15
+# AIDL Keymint v3 support (Android 15+)
 TW_INCLUDE_KEYMINT_V3 := true
+# Trustonic TEE support
+TW_INCLUDE_CRYPTO_TRUSTONIC := true
 
 # Hack
 PLATFORM_SECURITY_PATCH := 2099-12-31

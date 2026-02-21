@@ -31,7 +31,7 @@ Works:
 - [X] Flashing
 - [X] MTP
 - [X] Sideload
-- [ ] Decryption (AIDL Keymint v3 - Fixed, not tested)
+- [X] Decryption (AIDL Keymint v3 with Trustonic TEE)
 - [ ] USB OTG
 - [ ] Vibrator
 
