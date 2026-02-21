@@ -48,13 +48,16 @@ service mobicore /vendor/bin/mcDriverDaemon --sfs-reformat --P1 /mnt/vendor/pers
 on init
     #create mountpoint for /mnt/vendor/persist partition
     mkdir /mnt/vendor/persist 0771 system system
-
-on boot
- #Added Manual For Trustonic
-    mkdir /mnt/vendor/persist
-    mount ext4 /dev/block/by-name/persist /mnt/vendor/persist rw
+    mkdir /mnt/vendor/nvdata 0771 system system
+    mkdir /mnt/vendor/nvcfg 0771 system system
+    mkdir /mnt/vendor/protect_f 0771 system system
+    mkdir /mnt/vendor/protect_s 0771 system system
 
 on post-fs
+    # Mount persist partition for Trustonic TEE
+    wait /dev/block/by-name/persist
+    mount ext4 /dev/block/by-name/persist /mnt/vendor/persist noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc
+    
     chown system system /mnt/vendor/persist
     chmod 0771 /mnt/vendor/persist
 
@@ -63,6 +66,8 @@ on post-fs
 
     # Create mcRegistry to store failure record
     mkdir /mnt/vendor/persist/mcRegistry 0771 system system
+    mkdir /mnt/vendor/persist/rpmb 0700 system system
+    mkdir /mnt/vendor/persist/startPara 0700 system system
 
 on post-fs-data
     # Create /data/vendor/key_provisioning dir and get proper encryption policy installed

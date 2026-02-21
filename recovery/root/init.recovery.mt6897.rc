@@ -160,10 +160,15 @@ on property:crypto.ready=1
 on property:hwservicemanager.ready=true
     start mobicore
     start vendor.trustonic-tee
-    start vendor.gatekeeper-trustonic
     start vendor.keymint-trustonic
     start vendor.rpmbservice
     start deviceauthen_hal_service
+
+# Trustonic TEE ready - trigger gatekeeper start
+# Set property explicitly since triggers only fire on property CHANGE
+on property:init.svc.vendor.trustonic-tee=running
+    setprop ro.vendor.trustonic.ready true
+    start vendor.gatekeeper-trustonic
 
 # Gatekeeper starts after Trustonic TEE is ready
 on property:ro.vendor.trustonic.ready=true
