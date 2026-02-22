@@ -1,73 +1,52 @@
 # Infinix X6873 (GT 30 Pro) System Properties
-# FIXED v3.0: Correct crypto and TEE configuration for recovery
+# FIXED v5.0: Professional Fix Release
 
-# ========================================
 # Fstab
-# ========================================
 ro.postinstall.fstab.prefix=/system
 
-# ========================================
 # USB Configuration
-# ========================================
 ro.sys.usb.storage.type=mtp
 ro.sys.usb.mtp.whql.enable=0
 ro.sys.usb.mtp.device_type=3
-
-# Recovery USB IDs
 ro.recovery.usb.vid=18D1
 ro.recovery.usb.adb.pid=D001
 ro.recovery.usb.fastboot.pid=4EE0
-
-# USB Controller
 sys.usb.controller=112b0000.dwc3
 
-# ========================================
-# CRITICAL FIX v3.0: Crypto Configuration
-# FBE v2 with metadata encryption
-# ========================================
+# Crypto Configuration - FBE v2
 ro.crypto.volume.filenames_mode=aes-256-cts
 ro.crypto.type=file
 ro.crypto.state=encrypted
 ro.crypto.fbe=1
 ro.crypto.fbe_min_api=29
-
-# FBE metadata encryption support
 ro.crypto.metadata.encryption=1
 ro.crypto.volume.metadata.encryption=1
+ro.crypto.multiuser.enabled=1
+ro.crypto.multiuser.app_based=true
+ro.crypto.fbe_sdcard_enabled=true
+ro.crypto.fbe_user_data_dir=/data/user
 
-# ========================================
-# FIX v3.0: Gatekeeper Configuration
-# ========================================
+# Gatekeeper
 ro.hardware.gatekeeper=trustonic
 ro.vendor.gatekeeper.ready=0
 
-# ========================================
-# FIX v3.0: TEE Configuration for Trustonic
-# Initialize all state properties to 0/false
-# ========================================
+# TEE Configuration
 ro.vendor.mtk_tee_gp_support=1
 ro.vendor.mtk_trustonic_tee_support=1
 ro.vendor.trustonic.tee.support=1
 ro.vendor.trustonic.ready=0
 ro.vendor.mobicore.ready=0
 ro.vendor.tee.initialized=0
+ro.vendor.mtk_tee_support=1
 
-# ========================================
-# NEW v4.0: Automatic TA Update Configuration
-# ========================================
+# TA Update Configuration (v5.0)
 ro.vendor.ta.ready=0
 ro.vendor.ta.updated=0
-ro.vendor.ta.update_failed=0
-ro.vendor.ta.check_running=0
-ro.vendor.ta.status=unknown
-ro.vendor.ta.auto_update.enabled=1
-ro.vendor.ta.update.threshold=3
-ro.vendor.ta.backup.max=5
+ro.vendor.ta.state=unknown
+ro.vendor.ta.using_fallback=0
+ro.vendor.ta.hw_mismatch=0
 
-# ========================================
-# FIX v3.0: Keymaster/Keymint Configuration
-# AIDL Keymint v3 support for Android 15
-# ========================================
+# Keymaster/Keymint Configuration
 keymaster_ver=4.1
 ro.hardware.keymaster=trustonic
 ro.hardware.keymint=trustonic
@@ -75,70 +54,25 @@ ro.security.keymint.version=3
 ro.hardware.keystore=trustonic
 ro.security.keystore.keymaster=v4.1
 
-# ========================================
-# FIX v3.0: AVB Bypass Properties
-# Required for Trustonic TEE to function with unlocked bootloader
-# Set early in init for TEE compatibility
-# ========================================
+# AVB Bypass Properties
 ro.boot.verifiedbootstate=orange
 ro.boot.flash.locked=0
 ro.boot.vbmeta.device_state=unlocked
 ro.boot.veritymode=enforcing
-
-# Additional AVB properties for TEE binding
 ro.vendor.avb.ready=1
-ro.boot.vbmeta.digest=fake
-ro.boot.vbmeta.size=0
 
-# ========================================
-# FIX v3.0: MTK Platform Specific
-# ========================================
+# MTK Platform
 ro.vendor.mtk_platform=mt6897
 ro.vendor.mediatek.platform=mt6897
 ro.board.platform=mt6897
 
-# MTK TEE support
-ro.vendor.mtk_tee_support=1
-
-# ========================================
-# FIX v3.0: Transsion Security Services
-# ========================================
+# Transsion Security
 ro.vendor.transsion.security.rpmbsupport=1
 ro.vendor.transsion.security.deviceauthen=2.0
 ro.vendor.transsion.security.hap=1.0
 
-# ========================================
-# FIX v3.0: Crypto timing properties
-# These control the decryption flow timing
-# ========================================
-# Delay for TEE initialization (ms)
-ro.vendor.tee.init.delay=500
-
-# Maximum wait for TEE services (ms)
-ro.vendor.tee.wait.max=10000
-
-# Retry count for TEE initialization
-ro.vendor.tee.retry.count=3
-
-# ========================================
-# Vibrator Configuration
-# ========================================
+# Vibrator
 ro.vendor.tran.vibrator.option=single
 
-# ========================================
-# FIX v3.0: Multi-user decryption support
-# ========================================
-ro.crypto.multiuser.enabled=1
-ro.crypto.multiuser.app_based=true
-
-# ========================================
-# FIX v3.0: FBE specific properties
-# ========================================
-ro.crypto.fbe_sdcard_enabled=true
-ro.crypto.fbe_user_data_dir=/data/user
-
-# ========================================
-# Debug properties for troubleshooting
-# ========================================
+# Debug
 ro.vendor.tee.debug=0
-persist.vendor.tee.log=0

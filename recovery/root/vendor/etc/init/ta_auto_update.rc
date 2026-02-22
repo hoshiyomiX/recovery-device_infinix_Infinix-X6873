@@ -1,25 +1,14 @@
 # Infinix X6873 - TA Auto-Update Service Configuration
-# Add this to init.recovery.mt6897.rc for automatic TA synchronization
-#
-# This ensures TA compatibility across all firmware versions
-#
+# Version: 5.0
 
-# ========================================
-# TA Auto-Update Service
-# Runs after persist partition is mounted
-# ========================================
-service ta_auto_update /vendor/bin/ta_auto_update.sh check
-    class late_start
+service ta_auto_check /vendor/bin/ta_auto_update.sh check
+    class core
     user root
     group root system
     oneshot
     disabled
     seclabel u:r:recovery:s0
 
-# ========================================
-# TA Sync Service (manual trigger)
-# Use: setprop ro.vendor.ta.sync_requested 1
-# ========================================
 service ta_manual_sync /vendor/bin/ta_auto_update.sh sync
     class late_start
     user root
@@ -28,10 +17,6 @@ service ta_manual_sync /vendor/bin/ta_auto_update.sh sync
     disabled
     seclabel u:r:recovery:s0
 
-# ========================================
-# TA Rollback Service
-# Use: setprop ro.vendor.ta.rollback_requested 1
-# ========================================
 service ta_rollback /vendor/bin/ta_auto_update.sh rollback
     class late_start
     user root
@@ -40,35 +25,18 @@ service ta_rollback /vendor/bin/ta_auto_update.sh rollback
     disabled
     seclabel u:r:recovery:s0
 
-# ========================================
 # Triggers
-# ========================================
-
-# Run TA auto-update after persist is mounted and before TEE starts
 on property:crypto.ready=1
-    start ta_auto_update
+    start ta_auto_check
 
-# If TA update happened, may need to restart TEE services
-on property:ro.vendor.ta.updated=1
-    # Stop TEE services to reload updated TAs
-    stop mobicore
-    stop vendor.keymint-trustonic
-    stop vendor.gatekeeper-trustonic
-
-# Manual sync trigger
 on property:ro.vendor.ta.sync_requested=1
     start ta_manual_sync
 
-# Rollback trigger
 on property:ro.vendor.ta.rollback_requested=1
     start ta_rollback
 
-# ========================================
-# Properties for TA state tracking
-# ========================================
 on init
     setprop ro.vendor.ta.updated 0
     setprop ro.vendor.ta.valid 0
-    setprop ro.vendor.ta.needs_reboot 0
-    setprop ro.vendor.ta.sync_requested 0
-    setprop ro.vendor.ta.rollback_requested 0
+    setprop ro.vendor.ta.state unknown
+    setprop ro.vendor.ta.using_fallback 0
