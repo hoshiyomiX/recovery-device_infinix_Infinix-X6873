@@ -46,12 +46,6 @@ cc_library_shared {
         "-Wno-unused-parameter",
         "-DANDROID_BASE_LOGGING_H",
     ],
-
-    product_variables: {
-        recovery_available: {
-            enabled: true,
-        },
-    },
 }
 
 // Keymint bridge header for TWRP integration
