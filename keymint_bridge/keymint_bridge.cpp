@@ -1,13 +1,16 @@
 /*
  * TWRP-Keymint Bridge for Infinix X6873 (GT 30 Pro)
- * Version: 1.0 - Fix for Missing Bridge
+ * Version: 2.0 - AIDL Only (Vendor Compatible Build)
  *
- * This library bridges TWRP's crypto operations to Android's Keymint/Keymaster
+ * This library bridges TWRP's crypto operations to Android's Keymint
  * interfaces for proper FBE v2 decryption support.
  *
  * Supports:
- * - AIDL Keymint v3 (Android 15+)
- * - HIDL Keymaster v4.0/v4.1 (backward compatibility)
+ * - AIDL Keymint v3 (Android 15+) - Primary interface
+ * - AIDL Gatekeeper v1 (for PIN/password verification)
+ *
+ * Note: HIDL support removed due to vendor visibility restrictions.
+ * For Android 15 devices, AIDL Keymint is the primary interface.
  */
 
 #define LOG_TAG "twrp_keymint_bridge"
@@ -16,20 +19,17 @@
 #include <android-base/properties.h>
 
 #include <aidl/android/hardware/security/keymint/IKeyMintDevice.h>
+#include <aidl/android/hardware/security/keymint/IKeyMintOperation.h>
 #include <aidl/android/hardware/security/keymint/KeyParameter.h>
 #include <aidl/android/hardware/security/keymint/KeyParameterValue.h>
 #include <aidl/android/hardware/security/keymint/KeyCharacteristics.h>
 #include <aidl/android/hardware/security/keymint/KeyCreationResult.h>
 #include <aidl/android/hardware/security/keymint/SecurityLevel.h>
+#include <aidl/android/hardware/security/keymint/KeyMintHardwareInfo.h>
 
-#include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
-#include <android/hardware/keymaster/4.0/types.h>
-#include <android/hardware/keymaster/4.1/IKeymasterDevice.h>
-#include <android/hardware/keymaster/4.1/types.h>
+#include <aidl/android/hardware/gatekeeper/IGatekeeper.h>
 
 #include <binder/IServiceManager.h>
-#include <hidl/HidlSupport.h>
-#include <hidl/ServiceManagement.h>
 
 #include <cutils/properties.h>
 
@@ -45,15 +45,13 @@ namespace recovery {
 namespace keymint {
 
 using namespace ::aidl::android::hardware::security::keymint;
-using namespace ::android::hardware::keymaster::V4_0;
-using namespace ::android::hardware::keymaster::V4_1;
+using namespace ::aidl::android::hardware::gatekeeper;
 
 // Connection state tracking
 enum class ConnectionState {
     DISCONNECTED,
     CONNECTING,
     CONNECTED_AIDL,
-    CONNECTED_HIDL,
     FAILED
 };
 
@@ -62,12 +60,9 @@ private:
     std::mutex mutex_;
     ConnectionState state_ = ConnectionState::DISCONNECTED;
 
-    // AIDL interface
-    std::shared_ptr<IKeyMintDevice> aidl_keymint_;
-
-    // HIDL interface
-    sp<V4_1::IKeymasterDevice> hidl_keymaster_;
-    sp<V4_0::IKeymasterDevice> hidl_keymaster_v4_;
+    // AIDL interfaces
+    std::shared_ptr<IKeyMintDevice> keymint_device_;
+    std::shared_ptr<IGatekeeper> gatekeeper_;
 
     // Service readiness
     bool service_ready_ = false;
@@ -75,15 +70,17 @@ private:
     static constexpr int MAX_RETRIES = 10;
     static constexpr int RETRY_DELAY_MS = 500;
 
+    SecurityLevel security_level_ = SecurityLevel::SOFTWARE;
+
 public:
     KeymintBridge() = default;
     ~KeymintBridge() = default;
 
     /*
-     * Wait for Keymint/Keymaster service to be ready
+     * Wait for Keymint service to be ready
      * Returns true if service is available
      */
-    bool waitForService(int timeout_ms = 10000) {
+    bool waitForService(int timeout_ms = 15000) {
         auto start = std::chrono::steady_clock::now();
 
         while (true) {
@@ -91,44 +88,35 @@ public:
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
 
             if (elapsed >= timeout_ms) {
-                LOG(ERROR) << "Timeout waiting for Keymint/Keymaster service";
+                LOG(ERROR) << "Timeout waiting for Keymint service";
+                state_ = ConnectionState::FAILED;
                 return false;
             }
 
             // Check TEE readiness property
             int tee_ready = android::base::GetIntProperty("ro.vendor.tee.initialized", 0);
             if (tee_ready != 1) {
-                LOG(DEBUG) << "TEE not ready, waiting...";
+                LOG(DEBUG) << "TEE not ready (ro.vendor.tee.initialized=" << tee_ready << "), waiting...";
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
                 continue;
             }
 
-            // Try AIDL Keymint first (Android 15+)
+            // Try AIDL Keymint (Android 13+)
             if (connectAidlKeymint()) {
                 state_ = ConnectionState::CONNECTED_AIDL;
                 service_ready_ = true;
-                LOG(INFO) << "Connected to AIDL Keymint v3";
-                return true;
-            }
-
-            // Fallback to HIDL Keymaster 4.1
-            if (connectHidlKeymaster41()) {
-                state_ = ConnectionState::CONNECTED_HIDL;
-                service_ready_ = true;
-                LOG(INFO) << "Connected to HIDL Keymaster 4.1";
-                return true;
-            }
-
-            // Fallback to HIDL Keymaster 4.0
-            if (connectHidlKeymaster40()) {
-                state_ = ConnectionState::CONNECTED_HIDL;
-                service_ready_ = true;
-                LOG(INFO) << "Connected to HIDL Keymaster 4.0";
+                LOG(INFO) << "Connected to AIDL Keymint successfully";
                 return true;
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_DELAY_MS));
             retry_count_++;
+
+            if (retry_count_ >= MAX_RETRIES) {
+                LOG(ERROR) << "Max retries reached, Keymint connection failed";
+                state_ = ConnectionState::FAILED;
+                return false;
+            }
         }
 
         return false;
@@ -136,67 +124,76 @@ public:
 
     /*
      * Connect to AIDL Keymint service
+     * Supports both default and strongbox instances
      */
     bool connectAidlKeymint() {
-        ::ndk::SpAIBinder binder(AServiceManager_getService("android.hardware.security.keymint.IKeyMintDevice/default"));
+        // Try default instance first
+        if (tryConnectKeymintInstance("android.hardware.security.keymint.IKeyMintDevice/default")) {
+            return true;
+        }
+
+        // Try strongbox instance (for devices with secure element)
+        if (tryConnectKeymintInstance("android.hardware.security.keymint.IKeyMintDevice/strongbox")) {
+            return true;
+        }
+
+        // Try TEE instance
+        if (tryConnectKeymintInstance("android.hardware.security.keymint.IKeyMintDevice/tee")) {
+            return true;
+        }
+
+        LOG(ERROR) << "No Keymint instance found";
+        return false;
+    }
+
+    bool tryConnectKeymintInstance(const std::string& instance_name) {
+        ::ndk::SpAIBinder binder(AServiceManager_getService(instance_name.c_str()));
         if (binder.get() == nullptr) {
-            LOG(DEBUG) << "AIDL Keymint service not found";
+            LOG(DEBUG) << "Keymint service not found: " << instance_name;
             return false;
         }
 
-        aidl_keymint_ = IKeyMintDevice::fromBinder(binder);
-        if (aidl_keymint_ == nullptr) {
-            LOG(ERROR) << "Failed to get AIDL Keymint interface";
+        keymint_device_ = IKeyMintDevice::fromBinder(binder);
+        if (keymint_device_ == nullptr) {
+            LOG(ERROR) << "Failed to get Keymint interface from: " << instance_name;
             return false;
         }
 
         // Verify connection by getting hardware info
         KeyMintHardwareInfo info;
-        auto status = aidl_keymint_->getHardwareInfo(&info);
+        auto status = keymint_device_->getHardwareInfo(&info);
         if (!status.isOk()) {
             LOG(ERROR) << "Failed to get Keymint hardware info: " << status.getDescription();
-            aidl_keymint_ = nullptr;
+            keymint_device_ = nullptr;
             return false;
         }
 
-        LOG(INFO) << "AIDL Keymint connected, security level: " << (int)info.securityLevel
-                  << ", version: " << info.keyMintVersion;
+        security_level_ = info.securityLevel;
+        LOG(INFO) << "Keymint connected: " << instance_name
+                  << ", security level: " << static_cast<int>(info.securityLevel)
+                  << ", keymint version: " << info.keyMintVersion
+                  << ", keymaster version: " << info.keyMintVersion;
+
         return true;
     }
 
     /*
-     * Connect to HIDL Keymaster 4.1 service
+     * Connect to Gatekeeper service for PIN/password verification
      */
-    bool connectHidlKeymaster41() {
-        hidl_keymaster_ = V4_1::IKeymasterDevice::getService();
-        if (hidl_keymaster_ == nullptr) {
-            LOG(DEBUG) << "HIDL Keymaster 4.1 service not found";
+    bool connectGatekeeper() {
+        ::ndk::SpAIBinder binder(AServiceManager_getService("android.hardware.gatekeeper.IGatekeeper/default"));
+        if (binder.get() == nullptr) {
+            LOG(DEBUG) << "Gatekeeper service not found";
             return false;
         }
 
-        // Verify connection
-        auto result = hidl_keymaster_->getHardwareInfo();
-        if (!result.isOk()) {
-            LOG(ERROR) << "Failed to get Keymaster 4.1 hardware info";
-            hidl_keymaster_ = nullptr;
+        gatekeeper_ = IGatekeeper::fromBinder(binder);
+        if (gatekeeper_ == nullptr) {
+            LOG(ERROR) << "Failed to get Gatekeeper interface";
             return false;
         }
 
-        LOG(INFO) << "HIDL Keymaster 4.1 connected";
-        return true;
-    }
-
-    /*
-     * Connect to HIDL Keymaster 4.0 service
-     */
-    bool connectHidlKeymaster40() {
-        hidl_keymaster_v4_ = V4_0::IKeymasterDevice::getService();
-        if (hidl_keymaster_v4_ == nullptr) {
-            LOG(DEBUG) << "HIDL Keymaster 4.0 service not found";
-            return false;
-        }
-
-        LOG(INFO) << "HIDL Keymaster 4.0 connected";
+        LOG(INFO) << "Gatekeeper connected successfully";
         return true;
     }
 
@@ -207,19 +204,12 @@ public:
     bool deriveKey(const std::vector<uint8_t>& entropy,
                    const std::vector<uint8_t>& application_id,
                    std::vector<uint8_t>& derived_key) {
-        if (!service_ready_) {
-            LOG(ERROR) << "Service not ready";
+        if (!service_ready_ || keymint_device_ == nullptr) {
+            LOG(ERROR) << "Keymint service not ready";
             return false;
         }
 
-        if (state_ == ConnectionState::CONNECTED_AIDL) {
-            return deriveKeyAidl(entropy, application_id, derived_key);
-        } else if (state_ == ConnectionState::CONNECTED_HIDL) {
-            return deriveKeyHidl(entropy, application_id, derived_key);
-        }
-
-        LOG(ERROR) << "No valid connection state";
-        return false;
+        return deriveKeyAidl(entropy, application_id, derived_key);
     }
 
     /*
@@ -228,7 +218,7 @@ public:
     bool deriveKeyAidl(const std::vector<uint8_t>& entropy,
                        const std::vector<uint8_t>& application_id,
                        std::vector<uint8_t>& derived_key) {
-        if (aidl_keymint_ == nullptr) {
+        if (keymint_device_ == nullptr) {
             LOG(ERROR) << "AIDL Keymint not connected";
             return false;
         }
@@ -237,8 +227,76 @@ public:
         std::vector<KeyParameter> params;
 
         KeyParameter param;
+
+        // Key purpose: DERIVE_KEY
         param.tag = Tag::PURPOSE;
         param.value = KeyParameterValue(KeyPurpose::DERIVE_KEY);
+        params.push_back(param);
+
+        // Algorithm: AES
+        param.tag = Tag::ALGORITHM;
+        param.value = KeyParameterValue(Algorithm::AES);
+        params.push_back(param);
+
+        // Key size: 256 bits
+        param.tag = Tag::KEY_SIZE;
+        param.value = KeyParameterValue(256);
+        params.push_back(param);
+
+        // Block mode: XTS (for FBE)
+        param.tag = Tag::BLOCK_MODE;
+        param.value = KeyParameterValue(BlockMode::XTS);
+        params.push_back(param);
+
+        // Padding: NONE
+        param.tag = Tag::PADDING;
+        param.value = KeyParameterValue(PaddingMode::NONE);
+        params.push_back(param);
+
+        // Security level
+        param.tag = Tag::SECURITY_LEVEL;
+        param.value = KeyParameterValue(security_level_);
+        params.push_back(param);
+
+        // No authentication required for recovery
+        param.tag = Tag::NO_AUTH_REQUIRED;
+        param.value = KeyParameterValue(true);
+        params.push_back(param);
+
+        // Create key with entropy
+        KeyCreationResult result;
+        auto status = keymint_device_->generateKey(params, entropy, &result);
+
+        if (!status.isOk()) {
+            LOG(ERROR) << "Failed to generate key: " << status.getDescription();
+            return false;
+        }
+
+        if (result.keyBlob.empty()) {
+            LOG(ERROR) << "Empty key blob returned from Keymint";
+            return false;
+        }
+
+        derived_key = result.keyBlob;
+        LOG(INFO) << "Successfully derived key via AIDL Keymint, size: " << derived_key.size();
+        return true;
+    }
+
+    /*
+     * Import key for decryption (alternative to deriveKey)
+     */
+    bool importKey(const std::vector<uint8_t>& key_data,
+                   std::vector<uint8_t>& key_blob) {
+        if (keymint_device_ == nullptr) {
+            LOG(ERROR) << "Keymint not connected";
+            return false;
+        }
+
+        std::vector<KeyParameter> params;
+
+        KeyParameter param;
+        param.tag = Tag::PURPOSE;
+        param.value = KeyParameterValue(KeyPurpose::DECRYPT);
         params.push_back(param);
 
         param.tag = Tag::ALGORITHM;
@@ -249,142 +307,75 @@ public:
         param.value = KeyParameterValue(256);
         params.push_back(param);
 
-        param.tag = Tag::BLOCK_MODE;
-        param.value = KeyParameterValue(BlockMode::XTS);
-        params.push_back(param);
-
-        param.tag = Tag::PADDING;
-        param.value = KeyParameterValue(PaddingMode::NONE);
-        params.push_back(param);
-
-        param.tag = Tag::SECURITY_LEVEL;
-        param.value = KeyParameterValue(SecurityLevel::TRUSTED_ENVIRONMENT);
-        params.push_back(param);
-
-        // Create key with entropy
         KeyCreationResult result;
-        auto status = aidl_keymint_->generateKey(params, entropy, &result);
+        auto status = keymint_device_->importKey(
+            params,
+            KeyFormat::RAW,
+            key_data,
+            &result
+        );
 
         if (!status.isOk()) {
-            LOG(ERROR) << "Failed to generate key: " << status.getDescription();
+            LOG(ERROR) << "Failed to import key: " << status.getDescription();
             return false;
         }
 
-        if (result.keyBlob.empty()) {
-            LOG(ERROR) << "Empty key blob returned";
-            return false;
-        }
-
-        derived_key = result.keyBlob;
-        LOG(INFO) << "Successfully derived key via AIDL Keymint, size: " << derived_key.size();
+        key_blob = result.keyBlob;
         return true;
-    }
-
-    /*
-     * Derive key using HIDL Keymaster
-     */
-    bool deriveKeyHidl(const std::vector<uint8_t>& entropy,
-                       const std::vector<uint8_t>& application_id,
-                       std::vector<uint8_t>& derived_key) {
-        if (hidl_keymaster_ != nullptr) {
-            return deriveKeyHidl41(entropy, application_id, derived_key);
-        } else if (hidl_keymaster_v4_ != nullptr) {
-            return deriveKeyHidl40(entropy, application_id, derived_key);
-        }
-
-        LOG(ERROR) << "No HIDL Keymaster connection";
-        return false;
-    }
-
-    bool deriveKeyHidl41(const std::vector<uint8_t>& entropy,
-                         const std::vector<uint8_t>& application_id,
-                         std::vector<uint8_t>& derived_key) {
-        // Build key parameters
-        hidl_vec<KeyParameter> params;
-        params.resize(5);
-
-        params[0].tag = Tag::PURPOSE;
-        params[0].f.member = KeyParameterValue::make<KeyParameterValue::Tag::ENUM_VALUE>(
-            static_cast<uint32_t>(KeyPurpose::DERIVE_KEY));
-
-        params[1].tag = Tag::ALGORITHM;
-        params[1].f.member = KeyParameterValue::make<KeyParameterValue::Tag::ENUM_VALUE>(
-            static_cast<uint32_t>(Algorithm::AES));
-
-        params[2].tag = Tag::KEY_SIZE;
-        params[2].f.member = KeyParameterValue::make<KeyParameterValue::Tag::INTEGER>(256);
-
-        params[3].tag = Tag::BLOCK_MODE;
-        params[3].f.member = KeyParameterValue::make<KeyParameterValue::Tag::ENUM_VALUE>(
-            static_cast<uint32_t>(BlockMode::XTS));
-
-        params[4].tag = Tag::PADDING;
-        params[4].f.member = KeyParameterValue::make<KeyParameterValue::Tag::ENUM_VALUE>(
-            static_cast<uint32_t>(PaddingMode::NONE));
-
-        auto cb = [&](ErrorCode error, const hidl_vec<uint8_t>& keyBlob,
-                      const hidl_vec<KeyCharacteristics>& characteristics) {
-            if (error == ErrorCode::OK) {
-                derived_key.assign(keyBlob.begin(), keyBlob.end());
-                LOG(INFO) << "Key derived via HIDL 4.1, size: " << derived_key.size();
-            } else {
-                LOG(ERROR) << "HIDL 4.1 generateKey failed: " << toString(error);
-            }
-        };
-
-        hidl_keymaster_->generateKey(params, cb);
-        return !derived_key.empty();
-    }
-
-    bool deriveKeyHidl40(const std::vector<uint8_t>& entropy,
-                         const std::vector<uint8_t>& application_id,
-                         std::vector<uint8_t>& derived_key) {
-        // Similar implementation for V4.0
-        hidl_vec<KeyParameter> params;
-        params.resize(5);
-
-        params[0].tag = Tag::PURPOSE;
-        params[0].f.integer = static_cast<uint32_t>(KeyPurpose::DERIVE_KEY);
-
-        params[1].tag = Tag::ALGORITHM;
-        params[1].f.integer = static_cast<uint32_t>(Algorithm::AES);
-
-        params[2].tag = Tag::KEY_SIZE;
-        params[2].f.integer = 256;
-
-        params[3].tag = Tag::BLOCK_MODE;
-        params[3].f.integer = static_cast<uint32_t>(BlockMode::XTS);
-
-        params[4].tag = Tag::PADDING;
-        params[4].f.integer = static_cast<uint32_t>(PaddingMode::NONE);
-
-        auto cb = [&](ErrorCode error, const hidl_vec<uint8_t>& keyBlob,
-                      const hidl_vec<KeyCharacteristics>& characteristics) {
-            if (error == ErrorCode::OK) {
-                derived_key.assign(keyBlob.begin(), keyBlob.end());
-                LOG(INFO) << "Key derived via HIDL 4.0, size: " << derived_key.size();
-            } else {
-                LOG(ERROR) << "HIDL 4.0 generateKey failed: " << toString(error);
-            }
-        };
-
-        hidl_keymaster_v4_->generateKey(params, cb);
-        return !derived_key.empty();
     }
 
     /*
      * Check if gatekeeper is available for PIN/password verification
      */
     bool isGatekeeperReady() {
-        // Check property
+        // Check property first
         int gatekeeper_ready = android::base::GetIntProperty("ro.vendor.gatekeeper.ready", 0);
         if (gatekeeper_ready == 1) {
             return true;
         }
 
         // Try to connect directly
-        ::ndk::SpAIBinder binder(AServiceManager_getService("android.hardware.gatekeeper.IGatekeeper/default"));
-        return binder.get() != nullptr;
+        if (gatekeeper_ == nullptr) {
+            return connectGatekeeper();
+        }
+
+        return gatekeeper_ != nullptr;
+    }
+
+    /*
+     * Verify PIN/password with gatekeeper
+     */
+    bool verifyCredential(const std::vector<uint8_t>& credential,
+                          const std::vector<uint8_t>& expected_response,
+                          std::vector<uint8_t>& auth_token) {
+        if (!isGatekeeperReady() || gatekeeper_ == nullptr) {
+            LOG(ERROR) << "Gatekeeper not ready";
+            return false;
+        }
+
+        // Gatekeeper verify operation
+        // Note: This is a simplified implementation
+        // Real implementation would need the stored password handle
+        IGatekeeper::VerifyResponse response;
+        auto status = gatekeeper_->verify(
+            0,  // uid
+            0,  // challenge (0 for decryption)
+            {}, // enrolled_password_handle (empty for verification)
+            credential,
+            &response
+        );
+
+        if (!status.isOk()) {
+            LOG(ERROR) << "Gatekeeper verify failed: " << status.getDescription();
+            return false;
+        }
+
+        if (response.code == IGatekeeper::VerifyResponse::OK) {
+            auth_token = response.hardwareAuthToken;
+            return true;
+        }
+
+        return false;
     }
 
     /*
@@ -392,6 +383,7 @@ public:
      */
     ConnectionState getState() const { return state_; }
     bool isReady() const { return service_ready_; }
+    SecurityLevel getSecurityLevel() const { return security_level_; }
 };
 
 // Global instance
@@ -479,6 +471,19 @@ int twrp_keymint_gatekeeper_ready() {
     }
 
     return g_bridge->isGatekeeperReady() ? 1 : 0;
+}
+
+/*
+ * Get security level (0=SOFTWARE, 1=TEE, 2=STRONGBOX)
+ */
+int twrp_keymint_get_security_level() {
+    std::lock_guard<std::mutex> lock(g_bridge_mutex);
+
+    if (g_bridge == nullptr) {
+        return 0;
+    }
+
+    return static_cast<int>(g_bridge->getSecurityLevel());
 }
 
 /*

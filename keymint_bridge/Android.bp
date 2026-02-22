@@ -1,6 +1,9 @@
 //
 // TWRP-Keymint Bridge Library for Infinix X6873
-// Version: 1.0 - Fix for Missing Bridge
+// Version: 2.0 - AIDL Only (Vendor Compatible)
+//
+// Note: HIDL dependencies removed due to visibility restrictions
+// in vendor builds. AIDL Keymint v3 is the primary interface for Android 15+.
 //
 
 cc_library_shared {
@@ -21,18 +24,10 @@ cc_library_shared {
         "liblog",
         "libcutils",
         "libutils",
-        "libbinder",
         "libbinder_ndk",
-        "libhidlbase",
-        "libhidltransport",
-        "libhwbinder",
         "android.hardware.security.keymint-V3-ndk",
         "android.hardware.security.sharedsecret-V1-ndk",
         "android.hardware.security.secureclock-V1-ndk",
-        "android.hardware.keymaster-V4-ndk",
-        "android.hardware.keymaster@4.0",
-        "android.hardware.keymaster@4.1",
-        "android.hardware.gatekeeper@1.0",
         "android.hardware.gatekeeper-V1-ndk",
     ],
 
@@ -45,6 +40,7 @@ cc_library_shared {
         "-Werror",
         "-Wno-unused-parameter",
         "-DANDROID_BASE_LOGGING_H",
+        "-DAIDL_ONLY_MODE",
     ],
 }
 

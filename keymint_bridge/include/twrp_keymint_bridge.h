@@ -1,9 +1,12 @@
 /*
  * TWRP-Keymint Bridge Header
  * For Infinix X6873 (GT 30 Pro)
+ * Version: 2.0 - AIDL Only
  *
  * This header provides the C interface for TWRP to interact with
- * Android's Keymint/Keymaster services for FBE v2 decryption.
+ * Android's Keymint services for FBE v2 decryption.
+ *
+ * Note: HIDL interfaces removed for vendor build compatibility.
  */
 
 #ifndef TWRP_KEYMINT_BRIDGE_H
@@ -17,8 +20,19 @@ extern "C" {
 #endif
 
 /*
+ * Security level constants
+ */
+#define TWRP_KEYMINT_SECURITY_SOFTWARE   0
+#define TWRP_KEYMINT_SECURITY_TEE        1
+#define TWRP_KEYMINT_SECURITY_STRONGBOX  2
+
+/*
  * Initialize the keymint bridge
  * Must be called before any other functions
+ *
+ * This function waits for:
+ * 1. TEE initialization (ro.vendor.tee.initialized=1)
+ * 2. Keymint service availability
  *
  * Returns:
  *   0 on success
@@ -67,6 +81,16 @@ int twrp_keymint_is_ready(void);
  *   0 if not ready
  */
 int twrp_keymint_gatekeeper_ready(void);
+
+/*
+ * Get security level of the connected Keymint instance
+ *
+ * Returns:
+ *   TWRP_KEYMINT_SECURITY_SOFTWARE (0) - Software implementation
+ *   TWRP_KEYMINT_SECURITY_TEE (1) - Trusted Execution Environment
+ *   TWRP_KEYMINT_SECURITY_STRONGBOX (2) - Secure Element
+ */
+int twrp_keymint_get_security_level(void);
 
 /*
  * Cleanup resources
