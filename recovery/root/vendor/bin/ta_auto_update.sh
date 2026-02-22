@@ -1,16 +1,17 @@
 #!/vendor/bin/sh
 #
 # TA Auto-Update Script for Infinix X6873 (GT 30 Pro)
-# Version: 3.0 - Simplified Professional Fix
+# Version: 4.0 - Complete Fix Release
 #
 # FIXES:
 # 1. Vendor remount with fallback mechanism
 # 2. Hardware-backed key verification
 # 3. Explicit filesystem wait
 # 4. Comprehensive error handling
+# 5. RPMB backup integration (runs BEFORE this script via init)
 #
 
-SCRIPT_VERSION="3.0"
+SCRIPT_VERSION="4.0"
 DEVICE="X6873"
 
 # Paths

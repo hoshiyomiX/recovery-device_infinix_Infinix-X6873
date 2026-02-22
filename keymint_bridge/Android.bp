@@ -1,0 +1,63 @@
+//
+// TWRP-Keymint Bridge Library for Infinix X6873
+// Version: 1.0 - Fix for Missing Bridge
+//
+
+cc_library_shared {
+    name: "libtwrp_keymint_bridge",
+    vendor: true,
+    recovery_available: true,
+
+    srcs: [
+        "keymint_bridge.cpp",
+    ],
+
+    local_include_dirs: [
+        "include",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "libcutils",
+        "libutils",
+        "libbinder",
+        "libbinder_ndk",
+        "libhidlbase",
+        "libhidltransport",
+        "libhwbinder",
+        "android.hardware.security.keymint-V3-ndk",
+        "android.hardware.security.sharedsecret-V1-ndk",
+        "android.hardware.security.secureclock-V1-ndk",
+        "android.hardware.keymaster-V4-ndk",
+        "android.hardware.keymaster@4.0",
+        "android.hardware.keymaster@4.1",
+        "android.hardware.gatekeeper@1.0",
+        "android.hardware.gatekeeper-V1-ndk",
+    ],
+
+    static_libs: [
+        "libkeymaster_messages",
+    ],
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-parameter",
+        "-DANDROID_BASE_LOGGING_H",
+    ],
+
+    product_variables: {
+        recovery_available: {
+            enabled: true,
+        },
+    },
+}
+
+// Keymint bridge header for TWRP integration
+cc_library_headers {
+    name: "libtwrp_keymint_bridge_headers",
+    vendor: true,
+    recovery_available: true,
+    export_include_dirs: ["include"],
+}

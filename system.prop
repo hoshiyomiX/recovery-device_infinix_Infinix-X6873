@@ -1,5 +1,5 @@
 # Infinix X6873 (GT 30 Pro) System Properties
-# FIXED v5.0: Professional Fix Release
+# Version: 7.0 - Safe Boot with Complete Fallback
 
 # Fstab
 ro.postinstall.fstab.prefix=/system
@@ -21,6 +21,8 @@ ro.crypto.fbe=1
 ro.crypto.fbe_min_api=29
 ro.crypto.metadata.encryption=1
 ro.crypto.volume.metadata.encryption=1
+
+# Multi-user FBE v2 Support
 ro.crypto.multiuser.enabled=1
 ro.crypto.multiuser.app_based=true
 ro.crypto.fbe_sdcard_enabled=true
@@ -38,13 +40,12 @@ ro.vendor.trustonic.ready=0
 ro.vendor.mobicore.ready=0
 ro.vendor.tee.initialized=0
 ro.vendor.mtk_tee_support=1
+ro.vendor.tee.health=unknown
 
-# TA Update Configuration (v5.0)
-ro.vendor.ta.ready=0
-ro.vendor.ta.updated=0
-ro.vendor.ta.state=unknown
-ro.vendor.ta.using_fallback=0
-ro.vendor.ta.hw_mismatch=0
+# STUCK FIX: Boot Progress Tracking
+ro.vendor.boot.progress=0
+ro.vendor.boot.stuck=0
+ro.vendor.boot.emergency=0
 
 # Keymaster/Keymint Configuration
 keymaster_ver=4.1
@@ -66,10 +67,44 @@ ro.vendor.mtk_platform=mt6897
 ro.vendor.mediatek.platform=mt6897
 ro.board.platform=mt6897
 
-# Transsion Security
+# Transsion Security (Optional)
 ro.vendor.transsion.security.rpmbsupport=1
 ro.vendor.transsion.security.deviceauthen=2.0
 ro.vendor.transsion.security.hap=1.0
+ro.vendor.transsion.optional=1
+ro.vendor.transsion.rpmbs.ready=0
+ro.vendor.transsion.deviceauthen.ready=0
+ro.vendor.transsion.hap.ready=0
+
+# Multi-user directories
+ro.vendor.multiuser.dirs_ready=0
+
+# TWRP Decryption Support
+twrp.decrypt.need_password=0
+twrp.decrypt.keys_ready=0
+twrp.decrypt.de_key_size=0
+twrp.decrypt.ce_key_size=0
+twrp.decrypt.current_user=0
+twrp.decrypt.done=false
+twrp.decrypt.failed=0
+twrp.decrypt.skipped=0
+twrp.decrypt.attempting=0
+twrp.decrypt.error=
+
+# Service Timeout Flags
+ro.vendor.ta_auto_check.timeout=0
+ro.vendor.tee_module_loader.timeout=0
+ro.vendor.mobicore.timeout=0
+ro.vendor.keymint.timeout=0
+ro.vendor.rpmb.timeout=0
+ro.vendor.rpmb.backup_done=0
+
+# TA Update Configuration
+ro.vendor.ta.ready=0
+ro.vendor.ta.updated=0
+ro.vendor.ta.state=unknown
+ro.vendor.ta.using_fallback=0
+ro.vendor.ta.hw_mismatch=0
 
 # Vibrator
 ro.vendor.tran.vibrator.option=single

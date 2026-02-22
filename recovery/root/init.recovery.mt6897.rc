@@ -1,12 +1,12 @@
 # Infinix X6873 (GT 30 Pro) Recovery Init
-# Version: 4.0 - Professional Fix Release
+# Version: 7.0 - Safe Boot with Complete Fallback
 #
-# FIXES:
-# 1. Vendor remount fallback
-# 2. Hardware-backed key verification
-# 3. TA timing with filesystem wait
-# 4. RPMB error handling (in ta_auto_update.sh)
-# 5. Race condition prevention
+# KEY FIXES:
+# 1-6. All previous decryption fixes retained
+# 7. STUCK FIX: Timeout on ALL services to prevent splash hang
+# 8. STUCK FIX: Boot watchdog monitors progress
+# 9. FALLBACK: Recovery accessible even if decryption fails
+# 10. EMERGENCY: Manual override to skip TEE entirely
 #
 import /init.tee.rc
 import /init.recovery.usb.rc
@@ -16,21 +16,23 @@ import /init.recovery.usb.rc
 # ========================================
 on init
     export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
-    
+
+    # Crypto state
     setprop crypto.ready 0
     setprop ro.crypto.state encrypted
     setprop ro.crypto.type file
     setprop ro.crypto.fbe 1
-    
+
+    # USB
     setprop sys.usb.controller 112b0000.dwc3
     setprop sys.usb.configfs 1
-    
-    # AVB Bypass for TEE
+
+    # AVB Bypass
     setprop ro.boot.verifiedbootstate orange
     setprop ro.boot.flash.locked 0
     setprop ro.boot.vbmeta.device_state unlocked
     setprop ro.boot.veritymode enforcing
-    
+
     # TEE flags
     setprop ro.vendor.trustonic.tee.support 1
     setprop ro.vendor.mtk_tee_gp_support 1
@@ -38,13 +40,20 @@ on init
     setprop ro.vendor.trustonic.ready 0
     setprop ro.vendor.mobicore.ready 0
     setprop ro.vendor.tee.initialized 0
-    
+    setprop ro.vendor.tee.health unknown
+
+    # STUCK FIX: Boot progress tracking
+    setprop ro.vendor.boot.progress 0
+    setprop ro.vendor.boot.stuck 0
+    setprop ro.vendor.boot.emergency 0
+    setprop ro.vendor.boot.start_time 0
+
     # Keymint config
     setprop keymaster_ver 4.1
     setprop ro.hardware.keymaster trustonic
     setprop ro.hardware.keymint trustonic
     setprop ro.security.keymint.version 3
-    
+
     # TA update properties
     setprop ro.vendor.ta.ready 0
     setprop ro.vendor.ta.updated 0
@@ -52,33 +61,65 @@ on init
     setprop ro.vendor.ta.using_fallback 0
     setprop ro.vendor.ta.hw_mismatch 0
 
+    # Timeout flags
+    setprop ro.vendor.ta_auto_check.timeout 0
+    setprop ro.vendor.tee_module_loader.timeout 0
+    setprop ro.vendor.mobicore.timeout 0
+    setprop ro.vendor.keymint.timeout 0
+    setprop ro.vendor.rpmb.timeout 0
+
+    # Multi-user FBE v2
+    setprop ro.crypto.multiuser.enabled 1
+    setprop ro.crypto.multiuser.app_based true
+    setprop ro.crypto.fbe_user_data_dir /data/user
+
+    # TWRP decryption properties
+    setprop twrp.decrypt.need_password 0
+    setprop twrp.decrypt.keys_ready 0
+    setprop twrp.decrypt.current_user 0
+    setprop twrp.decrypt.done false
+    setprop twrp.decrypt.failed 0
+    setprop twrp.decrypt.skipped 0
+    setprop twrp.decrypt.attempting 0
+    setprop twrp.decrypt.error ""
+
+    # Transsion services (optional)
+    setprop ro.vendor.transsion.optional 1
+    setprop ro.vendor.transsion.rpmbs.ready 0
+    setprop ro.vendor.transsion.deviceauthen.ready 0
+    setprop ro.vendor.transsion.hap.ready 0
+
+    # Gatekeeper
+    setprop ro.vendor.gatekeeper.ready 0
+
 # ========================================
 # PHASE 2: Filesystem preparation
 # ========================================
 on fs
     install_keyring
-    wait /dev/block/platform/soc/112b0000.ufshci
+    wait /dev/block/platform/soc/112b0000.ufshci 10
     symlink /dev/block/platform/soc/112b0000.ufshci /dev/block/bootdevice
 
-# ========================================
-# PHASE 3: Partition mounting
-# FIX #3: Proper timing for TEE
-# ========================================
 on early-fs
-    wait /dev/block/by-name/persist
-    wait /dev/block/by-name/nvdata
-    wait /dev/block/by-name/metadata
-    
+    # Wait for partitions with timeout
+    wait /dev/block/by-name/persist 10
+    wait /dev/block/by-name/nvdata 10
+    wait /dev/block/by-name/metadata 10
+
+    # Mount partitions
     mount ext4 /dev/block/by-name/persist /mnt/vendor/persist noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc
     mount ext4 /dev/block/by-name/nvdata /mnt/vendor/nvdata noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc
     mount f2fs /dev/block/by-name/metadata /metadata noatime,nosuid,nodev,discard
-    
+
+    # Create directories
     mkdir /mnt/vendor/persist/mcRegistry 0771 system system
     mkdir /mnt/vendor/persist/rpmb 0700 system system
     mkdir /mnt/vendor/persist/startPara 0700 system system
     mkdir /mnt/vendor/persist/tee 0700 system system
+    mkdir /mnt/vendor/persist/rpmb_backup 0700 system system
     mkdir /metadata/vold 0700 system system
     mkdir /metadata/vold/metadata_encryption 0700 system system
+    mkdir /metadata/vold/metadata_encryption/user 0700 system system
 
 on late-fs
     mount_all /first_stage_ramdisk/fstab.mt6897 --late
@@ -87,25 +128,37 @@ on post-fs
     start boot-hal-1-2
     symlink /dev/block/mapper/pl_a /dev/block/by-name/preloader_raw_a
     symlink /dev/block/mapper/pl_b /dev/block/by-name/preloader_raw_b
-    mkdir /mnt/vendor/persist/rpmb_backup 0700 system system
 
 on boot
     start mtk.plpath.utils.link
     start vendor.usb_hal
     start vendor.usb_gadget_hal
     start vendor.vibrator_hal
+    # STUCK FIX: Start boot watchdog
+    start recovery_boot_guard
 
 # ========================================
-# FIX #3: Delayed crypto ready signal
+# Delayed crypto ready signal
 # ========================================
 on property:sys.init_completed=1
     exec -- /vendor/bin/sh -c "sleep 1"
     setprop crypto.ready 1
+    setprop ro.vendor.boot.progress 10
 
 # ========================================
-# Service Definitions
+# SERVICE DEFINITIONS
 # ========================================
 
+# Boot Guard - Monitors boot progress and forces fallback if stuck
+service recovery_boot_guard /vendor/bin/recovery_boot_guard.sh watchdog
+    class core
+    user root
+    group root system
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+# Path utilities
 service mtk.plpath.utils.link /system/bin/mtk_plpath_utils
     class main
     user root
@@ -114,8 +167,8 @@ service mtk.plpath.utils.link /system/bin/mtk_plpath_utils
     disabled
     seclabel u:r:recovery:s0
 
-# TEE Kernel Module Loader
-service tee_module_loader /vendor/bin/sh -c "insmod /vendor/lib/modules/mcDrvModule-ffa.ko 2>/dev/null || true"
+# STUCK FIX: RPMB Backup with timeout
+service rpmb_backup_service /vendor/bin/sh -c "timeout 10 sh -c 'mkdir -p /mnt/vendor/persist/rpmb_backup && cp -r /mnt/vendor/persist/rpmb/* /mnt/vendor/persist/rpmb_backup/ 2>/dev/null' || setprop ro.vendor.rpmb.timeout 1; setprop ro.vendor.rpmb.backup_done $$?"
     class core
     user root
     group root system
@@ -123,8 +176,8 @@ service tee_module_loader /vendor/bin/sh -c "insmod /vendor/lib/modules/mcDrvMod
     disabled
     seclabel u:r:recovery:s0
 
-# TA Auto-Update Service
-service ta_auto_check /vendor/bin/ta_auto_update.sh check
+# STUCK FIX: TA Auto-Check with timeout
+service ta_auto_check /vendor/bin/sh -c "timeout 30 /vendor/bin/ta_auto_update.sh check || setprop ro.vendor.ta_auto_check.timeout 1"
     class core
     user root
     group root system
@@ -142,6 +195,24 @@ service ta_manual_sync /vendor/bin/ta_auto_update.sh sync
 
 service ta_rollback /vendor/bin/ta_auto_update.sh rollback
     class late_start
+    user root
+    group root system
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+# STUCK FIX: TEE Module Loader with timeout
+service tee_module_loader /vendor/bin/sh -c "timeout 15 insmod /vendor/lib/modules/mcDrvModule-ffa.ko 2>/dev/null || setprop ro.vendor.tee_module_loader.timeout 1"
+    class core
+    user root
+    group root system
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+# TEE Health Check
+service tee_health_check /vendor/bin/tee_health_check.sh tee_chain
+    class hal
     user root
     group root system
     oneshot
@@ -204,6 +275,15 @@ service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymin
     oneshot
     seclabel u:r:recovery:s0
 
+# Keystore2 for Android 15
+service keystore2_recovery /system/bin/keystore2
+    class hal
+    user root
+    group root system
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
 # Gatekeeper
 service vendor.gatekeeper-trustonic /vendor/bin/hw/android.hardware.gatekeeper-service.trustonic
     class hal
@@ -224,9 +304,9 @@ service vendor.gatekeeper-fallback /vendor/bin/hw/android.hardware.gatekeeper@1.
     oneshot
     seclabel u:r:recovery:s0
 
-# Transsion Services
+# Transsion Services (optional, late_start won't block boot)
 service vendor.rpmbservice /vendor/bin/hw/vendor.transsion.hardware.security.rpmbservice@1.0-service
-    class hal
+    class late_start
     user root
     group root system
     disabled
@@ -234,15 +314,32 @@ service vendor.rpmbservice /vendor/bin/hw/vendor.transsion.hardware.security.rpm
     seclabel u:r:recovery:s0
 
 service deviceauthen_hal_service /vendor/bin/hw/vendor.transsion.hardware.security.deviceauthen@2.0-service
-    class hal
+    class late_start
     user root
     group root system
     disabled
     oneshot
     seclabel u:r:recovery:s0
 
-# RPMB Backup - FIX #4: with error handling
-service rpmb_backup_service /vendor/bin/sh -c "mkdir -p /mnt/vendor/persist/rpmb_backup && cp -r /mnt/vendor/persist/rpmb/* /mnt/vendor/persist/rpmb_backup/ 2>/dev/null; setprop ro.vendor.rpmb.backup_done $$?"
+service vendor.hap_service /vendor/bin/hw/vendor.transsion.hardware.security.hap@1.0-service
+    class late_start
+    user root
+    group root system
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
+# Multi-user directory setup
+service setup_multiuser_dirs /vendor/bin/sh -c "for user in 0 10 11 12 13 14 15; do mkdir -p /data/user_de/${user}/cache /data/user_de/${user}/code_cache /data/user_ce/${user} 2>/dev/null; done; setprop ro.vendor.multiuser.dirs_ready 1"
+    class late_start
+    user root
+    group root system
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+# TWRP Decryption Wrapper
+service twrp_decrypt_wrapper /vendor/bin/twrp_decrypt_wrapper.sh decrypt 0
     class late_start
     user root
     group root system
@@ -251,108 +348,188 @@ service rpmb_backup_service /vendor/bin/sh -c "mkdir -p /mnt/vendor/persist/rpmb
     seclabel u:r:recovery:s0
 
 # ========================================
-# FIX #5: Service Start Triggers - Ordered
+# SERVICE START TRIGGERS
 # ========================================
 
-# Step 1: Start TA check when partitions ready
+# Step 1: Start RPMB backup
 on property:crypto.ready=1
+    setprop ro.vendor.boot.progress 20
+    start rpmb_backup_service
+
+# Step 2: Start TA check after RPMB (regardless of RPMB result)
+on property:ro.vendor.rpmb.backup_done=*
+    setprop ro.vendor.boot.progress 25
     start ta_auto_check
 
-# Step 2: Load TEE module when TA check done
+# STUCK FIX: Handle TA check timeout
+on property:ro.vendor.ta_auto_check.timeout=1
+    setprop ro.vendor.ta.ready 1
+
+# Step 3: Load TEE module
 on property:ro.vendor.ta.ready=1
+    setprop ro.vendor.boot.progress 30
     start tee_module_loader
 
-# Step 3: Start TEE services after module loaded
+# STUCK FIX: Handle module loader timeout
+on property:ro.vendor.tee_module_loader.timeout=1
+    setprop ro.vendor.boot.stuck 1
+
+# Step 4: Start TEE services
 on property:init.svc.tee_module_loader=stopped
+    setprop ro.vendor.boot.progress 40
     start vendor.trustonic-tee
     start mobicore
 
-# Step 4: Signal mobicore ready
+# Step 5: Run health check when mobicore starts
 on property:init.svc.mobicore=running
-    exec -- /vendor/bin/sh -c "sleep 0.5"
-    setprop ro.vendor.mobicore.ready 1
+    setprop ro.vendor.boot.progress 45
+    start tee_health_check
 
-# Step 5: Start keymint
+# STUCK FIX: Handle mobicore timeout (set by health check)
+on property:ro.vendor.mobicore.timeout=1
+    setprop ro.vendor.mobicore.ready 1
+    setprop ro.vendor.tee.health "timeout_fallback"
+
+# Step 6: Start keymint
 on property:ro.vendor.mobicore.ready=1
+    setprop ro.vendor.boot.progress 50
     start vendor.keymint-trustonic
 
-# Step 6: Signal TEE ready
+# Step 7: Start keystore2
 on property:init.svc.vendor.keymint-trustonic=running
+    setprop ro.vendor.boot.progress 60
+    start keystore2_recovery
+
+# STUCK FIX: Handle keymint crash
+on property:init.svc.vendor.keymint-trustonic=crashed
+    setprop ro.vendor.keymint.timeout 1
     setprop ro.vendor.trustonic.ready 1
     setprop ro.vendor.tee.initialized 1
 
-# Step 7: Start remaining services
+# Step 8: TEE ready
+on property:init.svc.keystore2_recovery=running
+    setprop ro.vendor.boot.progress 70
+    setprop ro.vendor.trustonic.ready 1
+    setprop ro.vendor.tee.initialized 1
+
+on property:init.svc.keystore2_recovery=crashed
+    setprop ro.vendor.trustonic.ready 1
+    setprop ro.vendor.tee.initialized 1
+
+# Step 9: Start remaining services
 on property:ro.vendor.tee.initialized=1
+    setprop ro.vendor.boot.progress 80
     start vendor.gatekeeper-trustonic
     start vendor.rpmbservice
     start deviceauthen_hal_service
-    start rpmb_backup_service
+    start vendor.hap_service
+    start setup_multiuser_dirs
+    start twrp_decrypt_wrapper
 
 # ========================================
-# FIX #5: Race-Free Update Triggers
+# STUCK FIX: EMERGENCY FALLBACK TRIGGERS
 # ========================================
 
-# When TA updated, stop services in order with delays
+# Boot stuck detected - force recovery UI
+on property:ro.vendor.boot.stuck=1
+    setprop ro.crypto.state unsupported
+    setprop twrp.decrypt.failed 1
+    setprop twrp.decrypt.done true
+    setprop sys.boot_completed 1
+    stop recovery_boot_guard
+
+# Emergency override - user can trigger manually
+on property:ro.vendor.boot.emergency=1
+    stop mobicore
+    stop vendor.keymint-trustonic
+    stop vendor.trustonic-tee
+    stop keystore2_recovery
+    stop tee_health_check
+    setprop ro.crypto.state unsupported
+    setprop twrp.decrypt.skipped 1
+    setprop twrp.decrypt.done true
+    setprop sys.boot_completed 1
+    stop recovery_boot_guard
+
+# Manual decryption skip
+on property:twrp.decrypt.skip_requested=1
+    setprop ro.crypto.state unsupported
+    setprop twrp.decrypt.skipped 1
+    setprop twrp.decrypt.done true
+
+# Decryption failed - still allow recovery
+on property:twrp.decrypt.failed=1
+    setprop ro.crypto.state unsupported
+    setprop sys.boot_completed 1
+
+# ========================================
+# TRANSION SERVICES HANDLING
+# ========================================
+
+on property:init.svc.vendor.rpmbservice=running
+    setprop ro.vendor.transsion.rpmbs.ready 1
+
+on property:init.svc.deviceauthen_hal_service=running
+    setprop ro.vendor.transsion.deviceauthen.ready 1
+
+on property:init.svc.vendor.hap_service=running
+    setprop ro.vendor.transsion.hap.ready 1
+
+on property:init.svc.vendor.rpmbservice=crashed
+    setprop ro.vendor.transsion.rpmbs.ready 0
+
+on property:init.svc.deviceauthen_hal_service=crashed
+    setprop ro.vendor.transsion.deviceauthen.ready 0
+
+on property:init.svc.vendor.hap_service=crashed
+    setprop ro.vendor.transsion.hap.ready 0
+
+# ========================================
+# SERVICE RESTART HANDLING
+# ========================================
+
 on property:ro.vendor.ta.updated=1
     stop vendor.gatekeeper-trustonic
     exec -- /vendor/bin/sh -c "sleep 1"
     stop vendor.keymint-trustonic
     exec -- /vendor/bin/sh -c "sleep 1"
+    stop keystore2_recovery
+    exec -- /vendor/bin/sh -c "sleep 1"
     stop mobicore
 
-# Restart after services stopped
 on property:init.svc.mobicore=stopped
-    # Reset flags
     setprop ro.vendor.mobicore.ready 0
     setprop ro.vendor.trustonic.ready 0
     setprop ro.vendor.tee.initialized 0
-    # Restart chain
+    setprop ro.vendor.tee.health unknown
     exec -- /vendor/bin/sh -c "sleep 1"
     start mobicore
 
-# Manual sync trigger
 on property:ro.vendor.ta.sync_requested=1
     start ta_manual_sync
 
-# Rollback trigger
 on property:ro.vendor.ta.rollback_requested=1
     start ta_rollback
 
 # ========================================
-# Fallback triggers
+# CLEANUP TRIGGERS
 # ========================================
-on property:ro.vendor.trustonic.ready=0
-    start vendor.gatekeeper-fallback
 
-on property:init.svc.vendor.trustonic-tee=stopped
-    start vendor.trustonic-tee
-
-# ========================================
-# Cleanup on decryption complete
-# ========================================
 on property:twrp.decrypt.done=true
-    stop mobicore
-    stop vendor.gatekeeper-trustonic
-    stop vendor.keymint-trustonic
-    stop vendor.trustonic-tee
-    stop vendor.rpmbservice
-    stop deviceauthen_hal_service
+    setprop ro.vendor.boot.progress 100
+    stop recovery_boot_guard
 
 on property:ro.crypto.state=unsupported
     stop mobicore
-    stop vendor.gatekeeper-trustonic
     stop vendor.keymint-trustonic
+    stop keystore2_recovery
     stop vendor.trustonic-tee
-    stop vendor.rpmbservice
-    stop deviceauthen_hal_service
 
 on property:ro.crypto.state=unencrypted
     stop mobicore
-    stop vendor.gatekeeper-trustonic
     stop vendor.keymint-trustonic
+    stop keystore2_recovery
     stop vendor.trustonic-tee
-    stop vendor.rpmbservice
-    stop deviceauthen_hal_service
 
 on post-fs-data
     mkdir /data/vendor_de 0770 system system
@@ -361,9 +538,18 @@ on post-fs-data
     mkdir /data/vendor/tee 0770 system system
     mkdir /data/vendor/keymaster 0770 system system
     mkdir /data/vendor/gatekeeper 0770 system system
+    mkdir /data/user_de 0771 system system
+    mkdir /data/user_de/0 0771 system system
+    mkdir /data/user_ce 0771 system system
+    mkdir /data/user_ce/0 0771 system system
+    mkdir /data/system 0771 system system
+    mkdir /data/system/users 0771 system system
     start health-hal-2-1
 
-# USB Services
+# ========================================
+# USB SERVICES
+# ========================================
+
 service vendor.usb_hal /vendor/bin/hw/android.hardware.usb-aidl-service.mediatekv1.0
     class hal
     user system

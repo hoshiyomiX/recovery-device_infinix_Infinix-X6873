@@ -189,7 +189,7 @@ TARGET_USES_LOGD := true
 TARGET_USES_MKE2FS := true
 TW_MAX_BRIGHTNESS := 255
 TW_LOAD_VENDOR_BOOT_MODULES := true
-TW_DEVICE_VERSION := X6873-v5.0-PROFESSIONAL
+TW_DEVICE_VERSION := X6873-v7.0-ANTISTUCK
 TW_CUSTOM_CPU_TEMP_PATH := /sys/devices/virtual/thermal/thermal_zone31/temp
 
 # StatusBar
@@ -213,6 +213,14 @@ TW_SUPPORT_INPUT_AIDL_HAPTICS := true
 TW_SUPPORT_INPUT_AIDL_HAPTICS_FQNAME := "IVibrator/default"
 
 # ========================================
+# FLAW #1 FIX: Keymint Bridge Module
+# This is the critical missing component
+# ========================================
+TARGET_RECOVERY_DEVICE_MODULES += \
+    libtwrp_keymint_bridge \
+    libtwrp_keymint_bridge_headers
+
+# ========================================
 # FIX: Additional recovery modules for TEE
 # ========================================
 TARGET_RECOVERY_DEVICE_MODULES += \
@@ -222,7 +230,14 @@ TARGET_RECOVERY_DEVICE_MODULES += \
     gatekeeper.trustonic \
     gatekeeper.default \
     libSoftGatekeeper \
-    android.hardware.gatekeeper@1.0-impl
+    android.hardware.gatekeeper@1.0-impl \
+    android.hardware.security.keymint-V3-ndk \
+    android.hardware.security.sharedsecret-V1-ndk \
+    android.hardware.security.secureclock-V1-ndk \
+    android.hardware.security.rkp-V3-ndk \
+    android.hardware.keymaster-V4-ndk \
+    android.hardware.gatekeeper-V1-ndk \
+    android.system.keystore2-V1-ndk
 
 # ========================================
 # FIX: SELinux permissive for recovery
