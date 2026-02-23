@@ -23,6 +23,9 @@ on late-fs
 on post-fs
     start boot-hal-1-2
 
+    mkdir /metadata/vold 0770 system system
+    mkdir /metadata/vold/metadata_encryption 0770 system system
+
     symlink /dev/block/mapper/pl_a /dev/block/by-name/preloader_raw_a
     symlink /dev/block/mapper/pl_b /dev/block/by-name/preloader_raw_b
 
@@ -148,18 +151,21 @@ service trustonic_check_keybox_service /vendor/bin/kmsetkey_ca.trustonic -c
     disabled
     seclabel u:r:recovery:s0
 
-# Start services when hwservicemanager is ready (consolidated trigger to avoid race condition)
+# Start services with proper dependency chain to avoid race condition
 on property:hwservicemanager.ready=true
     start mobicore
-    start vendor.trustonic-tee
-    start vendor.keymint-trustonic
-    start vendor.rpmbservice
-    start deviceauthen_hal_service
 
-# Trustonic TEE ready - trigger gatekeeper start
+# Trustonic TEE daemon ready - start TEE HAL
+on property:init.svc.mobicore=running
+    start vendor.trustonic-tee
+
+# Trustonic TEE HAL ready - start keymint and dependent services
 on property:init.svc.vendor.trustonic-tee=running
     setprop ro.vendor.trustonic.ready true
+    start vendor.keymint-trustonic
     start vendor.gatekeeper-trustonic
+    start vendor.rpmbservice
+    start deviceauthen_hal_service
 
 on property:ro.crypto.state=unsupported
     stop mobicore
