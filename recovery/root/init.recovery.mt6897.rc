@@ -14,9 +14,7 @@ on fs
     wait /dev/block/platform/soc/112b0000.ufshci
     symlink /dev/block/platform/soc/112b0000.ufshci /dev/block/bootdevice
 
-# We need vold early for metadata encryption
-on early-fs
-    start vold
+# Metadata partition mounted via fstab - vold not required for TWRP FBE decryption
 
 on late-fs
     # Mount RW partitions which need run fsck
@@ -150,13 +148,7 @@ service trustonic_check_keybox_service /vendor/bin/kmsetkey_ca.trustonic -c
     disabled
     seclabel u:r:recovery:s0
 
-# Start services when crypto is ready
-on property:crypto.ready=1
-    start vendor.trustonic-tee
-    start vendor.keymint-trustonic
-    start vendor.rpmbservice
-
-# Start services when hwservicemanager is ready
+# Start services when hwservicemanager is ready (consolidated trigger to avoid race condition)
 on property:hwservicemanager.ready=true
     start mobicore
     start vendor.trustonic-tee
@@ -165,13 +157,8 @@ on property:hwservicemanager.ready=true
     start deviceauthen_hal_service
 
 # Trustonic TEE ready - trigger gatekeeper start
-# Set property explicitly since triggers only fire on property CHANGE
 on property:init.svc.vendor.trustonic-tee=running
     setprop ro.vendor.trustonic.ready true
-    start vendor.gatekeeper-trustonic
-
-# Gatekeeper starts after Trustonic TEE is ready
-on property:ro.vendor.trustonic.ready=true
     start vendor.gatekeeper-trustonic
 
 on property:ro.crypto.state=unsupported
