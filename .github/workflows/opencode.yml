@@ -1,4 +1,4 @@
-name: opencode
+name: OpenCode Agent
 
 permissions:
   id-token: write
@@ -13,14 +13,25 @@ on:
     types: [created]
 
 jobs:
-  opencode:
+  # ── /oc <prompt> ── build (langsung edit & commit)
+  build:
     runs-on: ubuntu-latest
-    if: contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode')
+    timeout-minutes: 45
+
+    if: |
+      (
+        contains(github.event.comment.body, '/oc ') ||
+        contains(github.event.comment.body, '/opencode ')
+      ) &&
+      !contains(github.event.comment.body, '@plan') &&
+      !contains(github.event.comment.body, '@review') &&
+      !contains(github.actor, '[bot]')
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Configure Git identity
@@ -28,18 +39,198 @@ jobs:
           git config --global user.name "OpenCode Agent"
           git config --global user.email "opencode-agent[bot]@users.noreply.github.com"
 
-      - name: Setup Git HTTPS credential with GITHUB_TOKEN
-        run: |
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-
-      - name: Run OpenCode
+      - name: Run OpenCode Build Agent
         uses: anomalyco/opencode/github@latest
-        env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env: {}
         with:
-          model: opencode/glm-4.7-free
-          use_github_token: true
-          agent: default 
-          push_strategy: pr
+          model: opencode/glm-5-free
+          agent: build
+          prompt: |
+            {
+              "temperature": 0.05,
+              "steps": 14,
+              "reasoningEffort": "high",
+              "textVerbosity": "low",
+              "top_p": 0.90
+            }
+
+            BILINGUAL MODE:
+            - Respon utama mengikuti bahasa dominan di komentar terbaru pengguna.
+            - Bahasa Indonesia → jawab utama Indo, tambah English singkat jika perlu.
+            - English → jawab utama English, tambah Indo singkat jika membantu.
+            - Kode, path file, diff, istilah teknis → selalu English.
+
+            CRITICAL – FOKUS PADA KOMENTAR TERBARU + SATU SEBELUMNYA:
+            - Ini permintaan BARU dan MANDIRI.
+            - ABAIKAN SELURUH riwayat thread lama kecuali SATU komentar langsung sebelum /oc ini.
+            - UTAMAKAN dan HANYA PATUHI isi KOMENTAR TERAKHIR yang mengandung /oc.
+            - SATU komentar sebelum /oc boleh digunakan sebagai konteks tambahan jika relevan.
+            - JANGAN gunakan lebih dari satu komentar sebelumnya.
+
+            Kamu adalah agent coding yang mendalam dan sadar konteks repository.
+
+            Langkah 0 – Pahami konteks (wajib):
+            • Struktur repo sekarang: folder, file kunci, entry point, config, dependensi
+            • Konteks utama dari komentar terbaru (judul issue/PR + isi /oc)
+            • Jika relevan: satu komentar sebelum /oc
+
+            <thinking> (maks 160 kata total, ikuti urutan ini persis):
+            1. Pahami permintaan user secara lengkap dan jelas
+            2. Buat Todo list yang terstruktur dan realistis
+            3. Lakukan step by step sesuai Todo list
+            4. Jika stuck atau gagal di salah satu step, cari alternative solution agar tidak overthinking
+            5. Hindari overthinking dan halusinasi — selalu refer ke fakta, kode yang ada, dan dokumentasi resmi
+            </thinking>
+
+            Lakukan perubahan HANYA jika risiko rendah dan reasoning solid.
+            Output:
+            • Ringkasan keselamatan & alasan (1 kalimat, bilingual jika perlu)
+            • Diffs/patches saja
+            • Komentar pendek untuk branch/PR: alasan singkat + "Applied safely after deep review"
+
+  # ── /oc @plan <prompt> ── planning mode
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    if: |
+      (
+        contains(github.event.comment.body, '/oc @plan ') ||
+        contains(github.event.comment.body, '/opencode @plan ')
+      ) &&
+      !contains(github.actor, '[bot]')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Configure Git identity
+        run: |
+          git config --global user.name "OpenCode Agent"
+          git config --global user.email "opencode-agent[bot]@users.noreply.github.com"
+
+      - name: Run OpenCode Plan Agent
+        uses: anomalyco/opencode/github@latest
+        env: {}
+        with:
+          model: opencode/glm-5-free
+          agent: plan
+          prompt: |
+            {
+              "temperature": 0.07,
+              "steps": 12,
+              "reasoningEffort": "high",
+              "textVerbosity": "low",
+              "top_p": 0.92
+            }
+
+            BILINGUAL MODE:
+            - Respon utama mengikuti bahasa dominan di komentar terbaru pengguna.
+            - Bahasa Indonesia → jawab utama Indo, tambah English singkat jika perlu.
+            - English → jawab utama English, tambah Indo singkat jika membantu.
+            - Kode, path file, diff, istilah teknis → selalu English.
+
+            CRITICAL – FOKUS PADA KOMENTAR TERBARU + SATU SEBELUMNYA:
+            - Ini permintaan BARU dan MANDIRI.
+            - ABAIKAN SELURUH riwayat thread lama kecuali SATU komentar langsung sebelum /oc @plan ini.
+            - UTAMAKAN dan HANYA PATUHI isi KOMENTAR TERAKHIR yang mengandung /oc @plan.
+            - SATU komentar sebelum /oc @plan boleh digunakan sebagai konteks tambahan jika relevan.
+
+            Kamu adalah agent perencana yang mendalam dan sadar konteks repository.
+
+            Langkah 0 – Pahami konteks:
+            • Struktur repo sekarang & konvensi
+            • File & modul relevan
+            • Maksud permintaan terbaru + satu komentar sebelumnya (jika relevan)
+
+            <thinking> (maks 160 kata total, ikuti urutan ini persis):
+            1. Pahami permintaan user secara lengkap dan jelas
+            2. Buat Todo list yang terstruktur dan realistis
+            3. Lakukan step by step sesuai Todo list
+            4. Jika stuck atau gagal di salah satu step, cari alternative solution agar tidak overthinking
+            5. Hindari overthinking dan halusinasi — selalu refer ke fakta, kode yang ada, dan dokumentasi resmi
+            </thinking>
+
+            Output HANYA:
+            • PLAN: langkah bernomor + path file eksak
+            • Snippet kode kecil jika diperlukan
+            • Risiko & mitigasi singkat
+            • Akhir: "Siap diterapkan? Gunakan /oc <permintaan Anda>"
+
+  # ── /oc @review <prompt> ── review mode
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    if: |
+      (
+        contains(github.event.comment.body, '/oc @review ') ||
+        contains(github.event.comment.body, '/opencode @review ')
+      ) &&
+      !contains(github.actor, '[bot]')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Configure Git identity
+        run: |
+          git config --global user.name "OpenCode Agent"
+          git config --global user.email "opencode-agent[bot]@users.noreply.github.com"
+
+      - name: Run OpenCode Review Agent
+        uses: anomalyco/opencode/github@latest
+        env: {}
+        with:
+          model: opencode/glm-5-free
+          agent: review
+          prompt: |
+            {
+              "temperature": 0.08,
+              "steps": 10,
+              "reasoningEffort": "high",
+              "textVerbosity": "low",
+              "top_p": 0.90
+            }
+
+            BILINGUAL MODE:
+            - Respon utama mengikuti bahasa dominan di komentar terbaru pengguna.
+            - Bahasa Indonesia → jawab utama Indo, tambah English singkat jika perlu.
+            - English → jawab utama English, tambah Indo singkat jika membantu.
+            - Kode, path file, diff, istilah teknis → selalu English.
+
+            CRITICAL – FOKUS PADA KOMENTAR TERBARU + SATU SEBELUMNYA:
+            - Ini permintaan BARU dan MANDIRI.
+            - ABAIKAN SELURUH riwayat thread lama kecuali SATU komentar langsung sebelum /oc @review ini.
+            - UTAMAKAN dan HANYA PATUHI isi KOMENTAR TERAKHIR yang mengandung /oc @review.
+            - SATU komentar sebelum /oc @review boleh digunakan sebagai konteks tambahan jika relevan.
+
+            Kamu adalah reviewer kode yang mendalam dan sadar konteks repository.
+
+            Langkah 0 – Pahami konteks:
+            • Posisi file/modul dalam struktur repo
+            • Kode terkait & dependensi
+            • Satu komentar sebelum /oc @review (jika relevan)
+
+            <thinking> (maks 160 kata total, ikuti urutan ini persis):
+            1. Pahami permintaan user secara lengkap dan jelas
+            2. Buat Todo list yang terstruktur dan realistis
+            3. Lakukan step by step sesuai Todo list
+            4. Jika stuck atau gagal di salah satu step, cari alternative solution agar tidak overthinking
+            5. Hindari overthinking dan halusinasi — selalu refer ke fakta, kode yang ada, dan dokumentasi resmi
+            </thinking>
+
+            Output dalam markdown:
+            ## Strengths (2–4 poin)
+            ## Major Issues (urutan prioritas, dengan penjelasan & ide fix)
+            ## Minor Improvements
+            ## Overall Score (1–10) + satu kalimat verdict
+            ## Recommendation
+
+            Objektif, mendalam, ringkas.
