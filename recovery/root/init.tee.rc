@@ -24,9 +24,11 @@ service mobicore /vendor/bin/mcDriverDaemon --sfs-reformat --P1 /mnt/vendor/pers
         -r /vendor/app/mcRegistry/07150000000000000000000000000000.drbin \
         -r /vendor/app/mcRegistry/07170000000000000000000000000000.drbin \
         -r /vendor/app/mcRegistry/5020170115e016302017012521300000.drbin
+    class early_hal
     user root
-    group root
+    group root system
     disabled
+    oneshot
     seclabel u:r:recovery:s0
 
 # t-Drv naming
@@ -68,6 +70,9 @@ on post-fs
     mkdir /mnt/vendor/persist/mcRegistry 0771 system system
     mkdir /mnt/vendor/persist/rpmb 0700 system system
     mkdir /mnt/vendor/persist/startPara 0700 system system
+    
+    # Signal that crypto services can now start (persist is mounted)
+    setprop crypto.ready 1
 
 on post-fs-data
     # Create /data/vendor/key_provisioning dir and get proper encryption policy installed

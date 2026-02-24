@@ -129,6 +129,10 @@ TW_USE_FSCRYPT_POLICY := 2
 TW_INCLUDE_KEYMINT_V3 := true
 # Trustonic TEE support
 TW_INCLUDE_CRYPTO_TRUSTONIC := true
+# Required for metadata encryption
+TW_CRYPTO_SYSTEM_VOLD_DEBUG := true
+# FBE metadata encryption
+TW_INCLUDE_FBE_METADATA_DECRYPT := true
 
 # Hack
 PLATFORM_SECURITY_PATCH := 2099-12-31

@@ -409,7 +409,8 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustonic:vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustonic \
     device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/android.hardware.gatekeeper-service.trustonic:vendor/bin/hw/android.hardware.gatekeeper-service.trustonic \
-    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/vendor.trustonic.tee@1.1-service:vendor/bin/hw/vendor.trustonic.tee@1.1-service
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/vendor.trustonic.tee@1.1-service:vendor/bin/hw/vendor.trustonic.tee@1.1-service \
+    device/infinix/Infinix-X6873/recovery/root/vendor/bin/mcDriverDaemon:vendor/bin/mcDriverDaemon
 
 # Copy Trustonic TEE Libraries
 PRODUCT_COPY_FILES += \
@@ -417,7 +418,9 @@ PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.trustonic.tee@1.1.so:vendor/lib64/vendor.trustonic.tee@1.1.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.trustonic.tee.tui@1.0.so:vendor/lib64/vendor.trustonic.tee.tui@1.0.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libTEECommon.so:vendor/lib64/libTEECommon.so \
-    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.system.keystore2-V1-ndk.so:vendor/lib64/android.system.keystore2-V1-ndk.so
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libMcClient.so:vendor/lib64/libMcClient.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.system.keystore2-V1-ndk.so:vendor/lib64/android.system.keystore2-V1-ndk.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.gatekeeper@1.0.so:vendor/lib64/android.hardware.gatekeeper@1.0.so
 
 # Copy system_ext TEE Libraries
 PRODUCT_COPY_FILES += \
@@ -469,7 +472,10 @@ PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.transsion.hardware.security.trancriticalparavfy@1.0.so:vendor/lib64/vendor.transsion.hardware.security.trancriticalparavfy@1.0.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libdeviceauthen.so:vendor/lib64/libdeviceauthen.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libhyperion_hap_ca.so:vendor/lib64/libhyperion_hap_ca.so \
-    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/hw/paytrigger.trustonic.so:vendor/lib64/hw/paytrigger.trustonic.so
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/hw/paytrigger.trustonic.so:vendor/lib64/hw/paytrigger.trustonic.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libsecure_load.so:vendor/lib64/libsecure_load.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libtran_critical_para.so:vendor/lib64/libtran_critical_para.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/hw/gatekeeper.trustonic.so:vendor/lib64/hw/gatekeeper.trustonic.so
 
 # Copy kmsetkey binary
 PRODUCT_COPY_FILES += \

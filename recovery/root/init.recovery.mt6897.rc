@@ -3,7 +3,6 @@ import /init.recovery.usb.rc
 
 on init
     export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
-    setprop crypto.ready 1
     
     # USB controller setup
     setprop sys.usb.controller 112b0000.dwc3
@@ -77,9 +76,9 @@ service mtk.plpath.utils.link /system/bin/mtk_plpath_utils
     disabled
     seclabel u:r:recovery:s0
 
-# Trustonic TEE Service - must start first
+# Trustonic TEE Service - must start first before any security services
 service vendor.trustonic-tee /vendor/bin/hw/vendor.trustonic.tee@1.1-service
-    class hal
+    class early_hal
     user root
     group root system
     disabled
@@ -150,29 +149,29 @@ service trustonic_check_keybox_service /vendor/bin/kmsetkey_ca.trustonic -c
     disabled
     seclabel u:r:recovery:s0
 
-# Start services when crypto is ready
+# Start mobicore daemon first - required for Trustonic TEE
 on property:crypto.ready=1
+    start mobicore
+
+# Start Trustonic TEE service after mobicore is running
+on property:init.svc.mobicore=running
     start vendor.trustonic-tee
+
+# Start keymint after TEE is running
+on property:init.svc.vendor.trustonic-tee=running
+    setprop ro.vendor.trustonic.ready true
     start vendor.keymint-trustonic
     start vendor.rpmbservice
+
+# Start gatekeeper after keymint
+on property:init.svc.vendor.keymint-trustonic=running
+    start vendor.gatekeeper-trustonic
 
 # Start services when hwservicemanager is ready
 on property:hwservicemanager.ready=true
-    start mobicore
-    start vendor.trustonic-tee
-    start vendor.keymint-trustonic
-    start vendor.rpmbservice
     start deviceauthen_hal_service
-
-# Trustonic TEE ready - trigger gatekeeper start
-# Set property explicitly since triggers only fire on property CHANGE
-on property:init.svc.vendor.trustonic-tee=running
-    setprop ro.vendor.trustonic.ready true
-    start vendor.gatekeeper-trustonic
-
-# Gatekeeper starts after Trustonic TEE is ready
-on property:ro.vendor.trustonic.ready=true
-    start vendor.gatekeeper-trustonic
+    start vendor.hap_hal
+    start trancriticalparavfy_service
 
 on property:ro.crypto.state=unsupported
     stop mobicore

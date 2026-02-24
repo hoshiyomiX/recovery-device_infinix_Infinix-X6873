@@ -25,8 +25,8 @@ odm_dlkm                        /odm_dlkm               erofs           ro      
 /dev/block/by-name/protect2     /mnt/vendor/protect_s   ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc                                                                                wait,check,formattable
 
 # Userdata partition
-/dev/block/by-name/metadata     /metadata               ext4            noatime,nosuid,nodev,discard                                                                                                            wait,check,formattable
-/dev/block/by-name/userdata     /data                   f2fs            noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt                             wait,check,formattable,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption
+/dev/block/by-name/metadata     /metadata               f2fs            noatime,nosuid,nodev,discard                                                                                                            wait,check,formattable
+/dev/block/by-name/userdata     /data                   f2fs            noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt                             wait,check,formattable,quota,latemount,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized+emulated_optimized,keydirectory=/metadata/vold/metadata_encryption,fsverity
 
 # Need to have this entry in here even though the mount point itself is no longer needed.
 # The update_engine code looks for this entry in order to determine the boot device address
