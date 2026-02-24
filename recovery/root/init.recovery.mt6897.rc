@@ -246,3 +246,69 @@ on property:sys.usb.config=adb && property:sys.usb.configfs=1
 on property:sys.usb.config=mtp,adb && property:sys.usb.configfs=1
     start vendor.usb_hal
     start vendor.usb_gadget_hal
+
+# Mass storage mode
+on property:sys.usb.config=mass_storage* && property:sys.usb.configfs=1
+    start vendor.usb_hal
+    start vendor.usb_gadget_hal
+
+# ============================================================================
+# OTG Hotplug Detection Service
+# ============================================================================
+# Service to monitor OTG connection state changes via sysfs
+service otg_hotplug_handler /system/bin/otg_hotplug.sh
+    class late_start
+    user root
+    group root system
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
+# Monitor extcon for USB OTG state changes (MediaTek)
+service otg_extcon_monitor /system/bin/sh -c "while [ -f /sys/class/extcon/*/state ]; do \
+    for extcon in /sys/class/extcon/*/state; do \
+        state=$(cat $extcon 2>/dev/null); \
+        if echo $state | grep -q 'USB=1'; then \
+            setprop sys.usb.otg.connected 1; \
+        elif echo $state | grep -q 'USB=0'; then \
+            setprop sys.usb.otg.connected 0; \
+        fi; \
+    done; \
+    sleep 1; \
+done"
+    class late_start
+    user root
+    group root system
+    disabled
+    seclabel u:r:recovery:s0
+
+# Alternative: Monitor via kernel uevent for USB device insertion/removal
+service otg_uevent_monitor /system/bin/sh -c "ueventd & \
+    while read line; do \
+        case \"$line\" in \
+            *add*usb*device*) setprop sys.usb.otg.host_mode 1 ;; \
+            *remove*usb*device*) setprop sys.usb.otg.host_mode 0 ;; \
+        esac; \
+    done < /proc/kmsg"
+    class late_start
+    user root
+    group root system
+    disabled
+    seclabel u:r:recovery:s0
+
+# Start OTG monitoring on boot
+on boot
+    start otg_extcon_monitor
+
+# Trigger when a USB device is attached in host mode
+on property:sys.usb.otg.device_attached=1
+    # Mount the attached USB storage
+    wait /dev/block/sd*
+    mkdir /mnt/usb_otg 0775 system system
+    mount vfat /dev/block/sd* /mnt/usb_otg ro
+    setprop twrp.otg.mounted 1
+
+# Trigger when USB device is removed
+on property:sys.usb.otg.device_attached=0
+    umount /mnt/usb_otg
+    setprop twrp.otg.mounted 0

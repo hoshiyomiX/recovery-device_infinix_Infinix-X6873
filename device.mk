@@ -507,3 +507,17 @@ PRODUCT_COPY_FILES += \
 # Copy Vibrator Config
 PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/etc/aac_richtap.config:vendor/etc/aac_richtap.config
+
+# ============================================================================
+# USB Mass Storage and OTG Hotplug Support
+# ============================================================================
+
+# Copy OTG Hotplug Script
+PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/system/bin/otg_hotplug.sh:system/bin/otg_hotplug.sh
+
+# USB Mass Storage support properties
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.sys.usb.mass_storage=1 \
+    persist.sys.usb.config=adb \
+    persist.sys.usb.otg_mode=1

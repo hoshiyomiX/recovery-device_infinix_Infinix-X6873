@@ -202,3 +202,23 @@
 
 # USB gadget/configfs
 /config/usb_gadget/*      0660   shell      system
+
+# USB OTG support - additional permissions
+/dev/bus/usb              0775   root       usb
+/sys/class/extcon         0660   root       system
+/sys/class/extcon/*       0660   root       system
+/sys/class/extcon/*/state 0664   root       system
+/sys/class/udc            0775   root       system
+/sys/class/udc/*          0775   root       system
+/sys/class/udc/*/device   0775   root       system
+/sys/devices/platform/*dwc3*  0775   root   system
+
+# USB mass storage backing files
+/dev/block/loop*          0660   root       system
+
+# OTG USB storage devices
+/dev/block/sd*            0660   root       system
+/dev/block/sda*           0660   root       system
+/dev/block/sdb*           0660   root       system
+/dev/block/sdc*           0660   root       system
+/dev/block/sdd*           0660   root       system
