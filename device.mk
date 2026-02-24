@@ -420,7 +420,8 @@ PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libTEECommon.so:vendor/lib64/libTEECommon.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libMcClient.so:vendor/lib64/libMcClient.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.system.keystore2-V1-ndk.so:vendor/lib64/android.system.keystore2-V1-ndk.so \
-    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.gatekeeper@1.0.so:vendor/lib64/android.hardware.gatekeeper@1.0.so
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.hardware.gatekeeper@1.0.so:vendor/lib64/android.hardware.gatekeeper@1.0.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libladder.so:vendor/lib64/libladder.so
 
 # Copy system_ext TEE Libraries
 PRODUCT_COPY_FILES += \
@@ -430,28 +431,50 @@ PRODUCT_COPY_FILES += \
 # Copy mcRegistry Trustlet Files for TEE
 PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/020f0000000000000000000000000000.drbin:vendor/app/mcRegistry/020f0000000000000000000000000000.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/020f0000000000000000000000000000.tlbin:vendor/app/mcRegistry/020f0000000000000000000000000000.tlbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/020b0000000000000000000000000000.drbin:vendor/app/mcRegistry/020b0000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/030b0000000000000000000000000000.drbin:vendor/app/mcRegistry/030b0000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/030c0000000000000000000000000000.drbin:vendor/app/mcRegistry/030c0000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/03100000000000000000000000000000.drbin:vendor/app/mcRegistry/03100000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/031c0000000000000000000000000000.drbin:vendor/app/mcRegistry/031c0000000000000000000000000000.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/031c0000000000000000000000000000.tlbin:vendor/app/mcRegistry/031c0000000000000000000000000000.tlbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/032c0000000000000000000000000000.drbin:vendor/app/mcRegistry/032c0000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/033c0000000000000000000000000000.drbin:vendor/app/mcRegistry/033c0000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/034c0000000000000000000000000000.drbin:vendor/app/mcRegistry/034c0000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/035c0000000000000000000000000000.drbin:vendor/app/mcRegistry/035c0000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/036c0000000000000000000000000000.drbin:vendor/app/mcRegistry/036c0000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/037c0000000000000000000000000000.drbin:vendor/app/mcRegistry/037c0000000000000000000000000000.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/05060000000000000000000000000000.tabin:vendor/app/mcRegistry/05060000000000000000000000000000.tabin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/05070000000000000000000000000000.drbin:vendor/app/mcRegistry/05070000000000000000000000000000.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/05070000000000000000000000000000.tlbin:vendor/app/mcRegistry/05070000000000000000000000000000.tlbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/05090000000000000000000000000000.tabin:vendor/app/mcRegistry/05090000000000000000000000000000.tabin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/05120000000000000000000000000000.drbin:vendor/app/mcRegistry/05120000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/05120000000000000000000000000001.drbin:vendor/app/mcRegistry/05120000000000000000000000000001.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/05120000000000000000000000000001.tlbin:vendor/app/mcRegistry/05120000000000000000000000000001.tlbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/05160000000000000000000000000000.drbin:vendor/app/mcRegistry/05160000000000000000000000000000.drbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/06090000000000000000000000000000.drbin:vendor/app/mcRegistry/06090000000000000000000000000000.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/06090000000000000000000000000000.tlbin:vendor/app/mcRegistry/06090000000000000000000000000000.tlbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/06140000000000000000000000000000.tabin:vendor/app/mcRegistry/06140000000000000000000000000000.tabin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/0706000000000000000000000000004d.tlbin:vendor/app/mcRegistry/0706000000000000000000000000004d.tlbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/07061000000000000000000000000000.tlbin:vendor/app/mcRegistry/07061000000000000000000000000000.tlbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/07150000000000000000000000000000.drbin:vendor/app/mcRegistry/07150000000000000000000000000000.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/07150000000000000000000000000000.tlbin:vendor/app/mcRegistry/07150000000000000000000000000000.tlbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/07170000000000000000000000000000.drbin:vendor/app/mcRegistry/07170000000000000000000000000000.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/07170000000000000000000000000000.tlbin:vendor/app/mcRegistry/07170000000000000000000000000000.tlbin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/07210000000000000000000000000000.drbin:vendor/app/mcRegistry/07210000000000000000000000000000.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/07210000000000000000000000000000.tlbin:vendor/app/mcRegistry/07210000000000000000000000000000.tlbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/08040000000000000000000000003419.tabin:vendor/app/mcRegistry/08040000000000000000000000003419.tabin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/08050000000000000000000000003419.drbin:vendor/app/mcRegistry/08050000000000000000000000003419.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/08050000000000000000000000003419.tlbin:vendor/app/mcRegistry/08050000000000000000000000003419.tlbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/08110000000000000000000000000000.tabin:vendor/app/mcRegistry/08110000000000000000000000000000.tabin \
     device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/40188311faf343488db888ad39496f9a.drbin:vendor/app/mcRegistry/40188311faf343488db888ad39496f9a.drbin \
-    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/5020170115e016302017012521300000.drbin:vendor/app/mcRegistry/5020170115e016302017012521300000.drbin
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/40188311faf343488db888ad39496f9a.tlbin:vendor/app/mcRegistry/40188311faf343488db888ad39496f9a.tlbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/5020170115e016302017012521300000.drbin:vendor/app/mcRegistry/5020170115e016302017012521300000.drbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/5020170115e016302017012521300000.tlbin:vendor/app/mcRegistry/5020170115e016302017012521300000.tlbin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/9e412fe49fe460a16bada5a0eeef369f.tabin:vendor/app/mcRegistry/9e412fe49fe460a16bada5a0eeef369f.tabin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/abcd270ea5c44c58bcd3384a2fa2539e.tabin:vendor/app/mcRegistry/abcd270ea5c44c58bcd3384a2fa2539e.tabin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/ce4550edbcb1662566b006ebcb303050.tabin:vendor/app/mcRegistry/ce4550edbcb1662566b006ebcb303050.tabin \
+    device/infinix/Infinix-X6873/recovery/root/vendor/app/mcRegistry/df1edda8627911e980ae507b9d9a7e7d.tabin:vendor/app/mcRegistry/df1edda8627911e980ae507b9d9a7e7d.tabin
 # Copy kmsetkey for Keymint Keybox Support
 PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/bin/kmsetkey_ca.trustonic:vendor/bin/kmsetkey_ca.trustonic \

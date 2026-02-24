@@ -32,6 +32,10 @@ on post-fs
     mkdir /tranfs/rpmb 0700 system system
     mkdir /mnt/vendor/persist/startPara 0700 system system
     mkdir /tranfs/startPara 0700 system system
+    # Additional directories for Trustonic security
+    mkdir /mnt/vendor/persist/keybox 0771 system system
+    mkdir /mnt/vendor/persist/paytrigger 0777 system system
+    restorecon /tranfs
 
 on boot
     start mtk.plpath.utils.link
@@ -77,20 +81,22 @@ service mtk.plpath.utils.link /system/bin/mtk_plpath_utils
     seclabel u:r:recovery:s0
 
 # Trustonic TEE Service - must start first before any security services
-service vendor.trustonic-tee /vendor/bin/hw/vendor.trustonic.tee@1.1-service
-    class early_hal
-    user root
-    group root system
+# Service name matches firmware: tee-1-1
+service tee-1-1 /vendor/bin/hw/vendor.trustonic.tee@1.1-service
+    class hal
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Gatekeeper Service - Trustonic version
-service vendor.gatekeeper-trustonic /vendor/bin/hw/android.hardware.gatekeeper-service.trustonic
+# Service name matches firmware: vendor.gatekeeper-default
+service vendor.gatekeeper-default /vendor/bin/hw/android.hardware.gatekeeper-service.trustonic
     class early_hal
     interface android.hardware.gatekeeper@1.0::IGatekeeper default
     interface android.hardware.gatekeeper.IGatekeeper/default
-    user root
-    group root
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
@@ -103,48 +109,48 @@ service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymin
     interface android.hardware.security.keymint.IRemotelyProvisionedComponent/default
     interface android.hardware.security.sharedsecret.ISharedSecret/default
     interface android.hardware.security.secureclock.ISecureClock/default
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Transsion RPMB Service - required for secure storage
 service vendor.rpmbservice /vendor/bin/hw/vendor.transsion.hardware.security.rpmbservice@1.0-service
     class hal
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Transsion Device Authentication Service
 service deviceauthen_hal_service /vendor/bin/hw/vendor.transsion.hardware.security.deviceauthen@2.0-service
     class hal
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Transsion HAP Service
 service vendor.hap_hal /vendor/bin/hw/vendor.transsion.hardware.security.hap@1.0-service
     class late_start
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Transsion Critical Parameter Verification Service
 service trancriticalparavfy_service /vendor/bin/hw/vendor.transsion.hardware.security.trancriticalparavfy@1.0-service
     class hal
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Trustonic Keybox Check Service
 service trustonic_check_keybox_service /vendor/bin/kmsetkey_ca.trustonic -c
     class late_start
-    user root
-    group root system
+    user system
+    group system
     oneshot
     disabled
     seclabel u:r:recovery:s0
@@ -155,17 +161,21 @@ on property:crypto.ready=1
 
 # Start Trustonic TEE service after mobicore is running
 on property:init.svc.mobicore=running
-    start vendor.trustonic-tee
+    start tee-1-1
 
-# Start keymint after TEE is running
-on property:init.svc.vendor.trustonic-tee=running
+# Start keymint after TEE is running and set trustonic ready property
+on property:init.svc.tee-1-1=running
     setprop ro.vendor.trustonic.ready true
     start vendor.keymint-trustonic
     start vendor.rpmbservice
 
 # Start gatekeeper after keymint
 on property:init.svc.vendor.keymint-trustonic=running
-    start vendor.gatekeeper-trustonic
+    start vendor.gatekeeper-default
+
+# Start gatekeeper when trustonic TEE is ready (matches firmware)
+on property:ro.vendor.trustonic.ready=true
+    start vendor.gatekeeper-default
 
 # Start services when hwservicemanager is ready
 on property:hwservicemanager.ready=true
@@ -175,33 +185,33 @@ on property:hwservicemanager.ready=true
 
 on property:ro.crypto.state=unsupported
     stop mobicore
-    stop vendor.gatekeeper-trustonic
+    stop vendor.gatekeeper-default
     stop vendor.keymint-trustonic
-    stop vendor.trustonic-tee
+    stop tee-1-1
     stop vendor.rpmbservice
     stop deviceauthen_hal_service
 
 on property:ro.crypto.state=unencrypted
     stop mobicore
-    stop vendor.gatekeeper-trustonic
+    stop vendor.gatekeeper-default
     stop vendor.keymint-trustonic
-    stop vendor.trustonic-tee
+    stop tee-1-1
     stop vendor.rpmbservice
     stop deviceauthen_hal_service
 
 on property:twrp.decrypt.done=true
     stop mobicore
-    stop vendor.gatekeeper-trustonic
+    stop vendor.gatekeeper-default
     stop vendor.keymint-trustonic
-    stop vendor.trustonic-tee
+    stop tee-1-1
     stop vendor.rpmbservice
     stop deviceauthen_hal_service
 
 on property:crypto.ready=0
     stop mobicore
-    stop vendor.gatekeeper-trustonic
+    stop vendor.gatekeeper-default
     stop vendor.keymint-trustonic
-    stop vendor.trustonic-tee
+    stop tee-1-1
     stop vendor.rpmbservice
     stop deviceauthen_hal_service
 

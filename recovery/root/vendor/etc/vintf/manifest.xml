@@ -123,6 +123,29 @@
         <name>android.hardware.soundtrigger3</name>
         <fqname>ISoundTriggerHw/default</fqname>
     </hal>
+    <!-- AIDL Keymint v3 for Android 15 Trustonic -->
+    <hal format="aidl">
+        <name>android.hardware.security.keymint</name>
+        <version>3</version>
+        <fqname>IKeyMintDevice/default</fqname>
+    </hal>
+    <hal format="aidl">
+        <name>android.hardware.security.sharedsecret</name>
+        <fqname>ISharedSecret/default</fqname>
+    </hal>
+    <hal format="aidl">
+        <name>android.hardware.security.secureclock</name>
+        <fqname>ISecureClock/default</fqname>
+    </hal>
+    <hal format="aidl">
+        <name>android.hardware.security.rkp</name>
+        <fqname>IRemotelyProvisionedComponent/default</fqname>
+    </hal>
+    <!-- AIDL Gatekeeper for Trustonic -->
+    <hal format="aidl">
+        <name>android.hardware.gatekeeper</name>
+        <fqname>IGatekeeper/default</fqname>
+    </hal>
     <hal format="hidl">
         <name>vendor.mediatek.hardware.aee</name>
         <transport>hwbinder</transport>

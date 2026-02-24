@@ -1,6 +1,6 @@
 # Start Daemon (Registry directories should already be present)
 # Based on firmware trustonic.rc for X6873
-service mobicore /vendor/bin/mcDriverDaemon --sfs-reformat --P1 /mnt/vendor/persist/mcRegistry \
+service mobicore /vendor/bin/mcDriverDaemon --P1 /mnt/vendor/persist/mcRegistry \
         -r /vendor/app/mcRegistry/06090000000000000000000000000000.drbin \
         -r /vendor/app/mcRegistry/020f0000000000000000000000000000.drbin \
         -r /vendor/app/mcRegistry/05120000000000000000000000000000.drbin \
@@ -24,11 +24,10 @@ service mobicore /vendor/bin/mcDriverDaemon --sfs-reformat --P1 /mnt/vendor/pers
         -r /vendor/app/mcRegistry/07150000000000000000000000000000.drbin \
         -r /vendor/app/mcRegistry/07170000000000000000000000000000.drbin \
         -r /vendor/app/mcRegistry/5020170115e016302017012521300000.drbin
-    class early_hal
-    user root
-    group root system
-    disabled
-    oneshot
+    user system
+    group system
+    class core
+    priority -20
     seclabel u:r:recovery:s0
 
 # t-Drv naming
@@ -50,16 +49,8 @@ service mobicore /vendor/bin/mcDriverDaemon --sfs-reformat --P1 /mnt/vendor/pers
 on init
     #create mountpoint for /mnt/vendor/persist partition
     mkdir /mnt/vendor/persist 0771 system system
-    mkdir /mnt/vendor/nvdata 0771 system system
-    mkdir /mnt/vendor/nvcfg 0771 system system
-    mkdir /mnt/vendor/protect_f 0771 system system
-    mkdir /mnt/vendor/protect_s 0771 system system
 
 on post-fs
-    # Mount persist partition for Trustonic TEE
-    wait /dev/block/by-name/persist
-    mount ext4 /dev/block/by-name/persist /mnt/vendor/persist noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc
-    
     chown system system /mnt/vendor/persist
     chmod 0771 /mnt/vendor/persist
 
@@ -68,9 +59,19 @@ on post-fs
 
     # Create mcRegistry to store failure record
     mkdir /mnt/vendor/persist/mcRegistry 0771 system system
-    mkdir /mnt/vendor/persist/rpmb 0700 system system
+    mkdir /mnt/vendor/persist/keybox 0771 system system
+
+    # BSP: Create startPara for anti-crack
     mkdir /mnt/vendor/persist/startPara 0700 system system
-    
+    restorecon /tranfs
+    mkdir /tranfs/startPara 0700 system system
+    chown system system /tranfs/startPara
+    chmod 0777 /tranfs/startPara
+
+    # USD: add paytrigger
+    mkdir /mnt/vendor/persist/paytrigger 0777 system system
+    chown system system /mnt/vendor/persist/paytrigger
+
     # Signal that crypto services can now start (persist is mounted)
     setprop crypto.ready 1
 
