@@ -27,14 +27,14 @@
 /nvram                  emmc            /dev/block/by-name/nvram                                                                                flags=display=nvram;backup
 
 # Standard MediaTeks's partitions
-/flashinfo              emmc            /dev/block/by-name/flashinfo                                                                    flags=display="SP Flash Tool Log";backup;flashimg
+# flashinfo partition removed - not present on this device
 /expdb                  emmc            /dev/block/by-name/expdb                                                                                flags=display="MTK Crash Log";backup;flashimg
 /logo                   emmc            /dev/block/by-name/logo                                                                                 flags=display="Boot Logo";backup;flashimg
 /otp                    emmc            /dev/block/by-name/otp                                                                                  flags=display=otp
 /seccfg                 emmc            /dev/block/by-name/seccfg                                                                               flags=display=seccfg
 /spmfw                  emmc            /dev/block/by-name/spmfw                                                                                flags=display=spmfw;slotselect
-/tee_a                  emmc            /dev/block/by-name/tee_a                                                                                flags=display="TEE Slot A";backup
-/tee_b                  emmc            /dev/block/by-name/tee_b                                                                                flags=display="TEE Slot B";backup
+/tee1                   emmc            /dev/block/by-name/tee1                                                                                flags=display="TEE Slot 1";backup
+/tee2                   emmc            /dev/block/by-name/tee2                                                                                flags=display="TEE Slot 2";backup
 
 # Removable Storage
 /external_sd            auto            /dev/block/mmcblk1p1                            /dev/block/mmcblk0p1                                    flags=display="Micro SD Card";storage;wipeingui;removable;backup=0
