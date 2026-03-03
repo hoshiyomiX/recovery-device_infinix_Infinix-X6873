@@ -132,17 +132,99 @@ jobs:
           fetch-depth: 1
 
       # --------------------------------------------------------
-      # Step 2: FAST Cleanup (replaces slimhub_actions - saves ~6 min)
+      # Step 2: AGGRESSIVE Cleanup (comprehensive like slimhub_actions but faster)
+      # Target: Free ~45-50GB for OrangeFox/TWRP builds
+      # Time: ~30-60 seconds vs slimhub_actions ~6 minutes
       # --------------------------------------------------------
-      - name: Quick Cleanup
+      - name: Free Disk Space
         run: |
-          echo "=== Quick workspace cleanup ==="
-          # Remove large unnecessary packages quickly
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android 2>/dev/null || true
-          sudo rm -rf /opt/ghc /opt/hostedtoolcache/CodeQL 2>/dev/null || true
-          # Clean apt cache
-          sudo apt-get clean
+          echo "=== Disk Space Before Cleanup ==="
           df -h /
+          echo ""
+
+          # Remove large directories (fastest method - direct rm)
+          echo "Removing large tool directories..."
+
+          # .NET SDK (~2-3GB)
+          sudo rm -rf /usr/share/dotnet 2>/dev/null || true
+
+          # Android SDK (~10-15GB) - CRITICAL for recovery builds
+          sudo rm -rf /usr/local/lib/android 2>/dev/null || true
+
+          # Haskell/GHC (~3-5GB)
+          sudo rm -rf /opt/ghc 2>/dev/null || true
+
+          # CodeQL (~5-8GB)
+          sudo rm -rf /opt/hostedtoolcache/CodeQL 2>/dev/null || true
+
+          # Remove ALL hostedtoolcache except what we need
+          sudo rm -rf /opt/hostedtoolcache/go 2>/dev/null || true
+          sudo rm -rf /opt/hostedtoolcache/node 2>/dev/null || true
+          sudo rm -rf /opt/hostedtoolcache/Python 2>/dev/null || true
+          sudo rm -rf /opt/hostedtoolcache/Ruby 2>/dev/null || true
+          sudo rm -rf /opt/hostedtoolcache/pipx 2>/dev/null || true
+
+          # Remove browsers (not needed for CLI builds)
+          sudo rm -rf /usr/local/share/chromium 2>/dev/null || true
+          sudo rm -rf /usr/local/share/google-chrome 2>/dev/null || true
+          sudo rm -rf /usr/local/share/microsoft-edge 2>/dev/null || true
+          sudo rm -rf /usr/local/share/firefox 2>/dev/null || true
+
+          # Remove Azure CLI (~500MB)
+          sudo rm -rf /opt/az 2>/dev/null || true
+          sudo rm -rf /usr/lib/azure 2>/dev/null || true
+
+          # Clean apt cache and lists
+          echo "Cleaning apt cache..."
+          sudo apt-get clean -y
+          sudo rm -rf /var/lib/apt/lists/*
+          sudo rm -rf /var/cache/apt/archives/*
+
+          # Remove Docker images (if any)
+          echo "Removing Docker images..."
+          sudo docker system prune -af 2>/dev/null || true
+          sudo rm -rf /var/lib/docker 2>/dev/null || true
+
+          # Remove large documentation and man pages
+          sudo rm -rf /usr/share/doc /usr/share/man /usr/share/info 2>/dev/null || true
+
+          # Clean journal logs
+          sudo journalctl --vacuum-time=1s 2>/dev/null || true
+
+          # Remove snap packages (if any)
+          sudo rm -rf /snap 2>/dev/null || true
+
+          # Remove unused apt packages that take significant space
+          echo "Removing unused packages..."
+          sudo apt-get remove -y --purge \
+            azure-cli \
+            google-chrome-stable \
+            microsoft-edge-stable \
+            firefox \
+            chromium-browser \
+            powershell \
+            dotnet-sdk-* \
+            2>/dev/null || true
+
+          # Final apt clean
+          sudo apt-get autoremove -y --purge 2>/dev/null || true
+          sudo apt-get clean -y
+
+          echo ""
+          echo "=== Disk Space After Cleanup ==="
+          df -h /
+
+          # Verify we have enough space for build
+          AVAILABLE_GB=$(df -BG / | awk 'NR==2 {print $4}' | tr -d 'G')
+          echo ""
+          echo "Available space: ${AVAILABLE_GB}GB"
+
+          if [ "$AVAILABLE_GB" -lt 100 ]; then
+            echo "⚠️ WARNING: Less than 100GB available. Build may fail!"
+            echo "Consider running with smaller parallel jobs."
+          else
+            echo "✅ Sufficient disk space for OrangeFox/TWRP build"
+          fi
 
       # --------------------------------------------------------
       # Step 3: Initialize workspace
