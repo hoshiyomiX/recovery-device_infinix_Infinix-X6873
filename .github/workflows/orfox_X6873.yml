@@ -614,30 +614,21 @@ jobs:
           IMAGE_NAME=$(basename "$IMAGE_PATH")
           IMAGE_SIZE=$(stat -c%s "$IMAGE_PATH")
           IMAGE_SIZE_MB=$((IMAGE_SIZE / 1024 / 1024))
-          IMAGE_BASENAME="${IMAGE_NAME%.*}"  # Remove extension for clean title
+          # Release title = output filename (without .img extension)
+          RELEASE_TITLE="${IMAGE_NAME%.*}"
 
           echo ""
           echo "=== Image Found ==="
           echo "File: $IMAGE_NAME"
           echo "Size: ${IMAGE_SIZE_MB}MB"
+          echo "Release Title: $RELEASE_TITLE"
 
           SHA256=$(sha256sum "$IMAGE_PATH" | awk '{print $1}')
           MD5=$(md5sum "$IMAGE_PATH" | awk '{print $1}')
 
-          ZIP_PATH=$(find "$OUT_DIR" -maxdepth 2 -name "OrangeFox-*.zip" -type f | head -n1)
-          ZIP_NAME=""
-          if [ -n "$ZIP_PATH" ]; then
-            ZIP_NAME=$(basename "$ZIP_PATH")
-            echo ""
-            echo "=== ZIP Found ==="
-            echo "File: $ZIP_NAME"
-          fi
-
           BUILD_DATE=$(date +"%Y%m%d")
           BUILD_TIME=$(date +"%H%M%S")
           BUILD_VERSION="R11.3"
-          # Release title matches output filename convention
-          RELEASE_TITLE="OrangeFox-${BUILD_VERSION}-Unofficial-${{ github.event.inputs.DEVICE_NAME }}-${IMAGE_BASENAME}-${BUILD_DATE}"
 
           echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "image_path=$IMAGE_PATH" >> $GITHUB_OUTPUT
@@ -645,8 +636,6 @@ jobs:
           echo "image_size_bytes=$IMAGE_SIZE" >> $GITHUB_OUTPUT
           echo "sha256=$SHA256" >> $GITHUB_OUTPUT
           echo "md5=$MD5" >> $GITHUB_OUTPUT
-          echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
-          echo "zip_path=$ZIP_PATH" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
           echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
           echo "build_version=$BUILD_VERSION" >> $GITHUB_OUTPUT
