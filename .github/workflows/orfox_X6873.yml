@@ -614,6 +614,7 @@ jobs:
           IMAGE_NAME=$(basename "$IMAGE_PATH")
           IMAGE_SIZE=$(stat -c%s "$IMAGE_PATH")
           IMAGE_SIZE_MB=$((IMAGE_SIZE / 1024 / 1024))
+          IMAGE_BASENAME="${IMAGE_NAME%.*}"  # Remove extension for clean title
 
           echo ""
           echo "=== Image Found ==="
@@ -635,6 +636,8 @@ jobs:
           BUILD_DATE=$(date +"%Y%m%d")
           BUILD_TIME=$(date +"%H%M%S")
           BUILD_VERSION="R11.3"
+          # Release title matches output filename convention
+          RELEASE_TITLE="OrangeFox-${BUILD_VERSION}-Unofficial-${{ github.event.inputs.DEVICE_NAME }}-${IMAGE_BASENAME}-${BUILD_DATE}"
 
           echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "image_path=$IMAGE_PATH" >> $GITHUB_OUTPUT
@@ -647,6 +650,7 @@ jobs:
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
           echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
           echo "build_version=$BUILD_VERSION" >> $GITHUB_OUTPUT
+          echo "release_title=$RELEASE_TITLE" >> $GITHUB_OUTPUT
 
       # --------------------------------------------------------
       # Step 16: Upload to GitHub Release
@@ -656,7 +660,7 @@ jobs:
         with:
           files: |
             ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}/${{ steps.artifacts.outputs.image_path }}
-          name: OrangeFox-${{ steps.artifacts.outputs.build_version }}-Unofficial-${{ github.event.inputs.DEVICE_NAME }}-${{ steps.artifacts.outputs.build_date }}
+          name: ${{ steps.artifacts.outputs.release_title }}
           tag_name: v${{ steps.artifacts.outputs.build_date }}-${{ github.run_number }}
           body: |
             > [!WARNING]
@@ -665,6 +669,17 @@ jobs:
 
             > [!IMPORTANT]
             > **TESTING PHASE** - This build is intended for testing purposes only. Do not try if you not acknowledge the risk!
+
+            ### 🤝 Need your help!
+
+            > [!NOTE]
+            > **Help improve this build!** Please take logs to speed up fixes & stability improvements.
+
+            **How to capture logs:**
+            1. In OrangeFox: **Menu → Copy Log to SD**
+            2. Or via ADB: `adb pull /tmp/recovery.log`
+
+            **Submit via:** [GitHub Issues](https://github.com/hoshiyomiX/recovery-device_infinix_Infinix-X6873/issues) or [Telegram](https://t.me/hoshiyomi_id)
 
             ---
 
@@ -715,18 +730,5 @@ jobs:
             # MD5
             md5sum vendor_boot.img
             ```
-
-            ---
-
-            ### 🤝 Need your help!
-
-            > [!NOTE]
-            > **Help improve this build!** Please take logs to speed up fixes & stability improvements.
-
-            **How to capture logs:**
-            1. In OrangeFox: **Menu → Copy Log to SD**
-            2. Or via ADB: `adb pull /tmp/recovery.log`
-
-            **Submit via:** [GitHub Issues](https://github.com/hoshiyomiX/recovery-device_infinix_Infinix-X6873/issues) or [Telegram](https://t.me/hoshiyomi_id)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
