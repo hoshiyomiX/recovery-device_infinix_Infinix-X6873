@@ -623,9 +623,6 @@ jobs:
           SHA256=$(sha256sum "$IMAGE_PATH" | awk '{print $1}')
           MD5=$(md5sum "$IMAGE_PATH" | awk '{print $1}')
 
-          echo "$SHA256  $IMAGE_NAME" > "${IMAGE_PATH}.sha256"
-          echo "$MD5  $IMAGE_NAME" > "${IMAGE_PATH}.md5"
-
           ZIP_PATH=$(find "$OUT_DIR" -maxdepth 2 -name "OrangeFox-*.zip" -type f | head -n1)
           ZIP_NAME=""
           if [ -n "$ZIP_PATH" ]; then
@@ -659,119 +656,77 @@ jobs:
         with:
           files: |
             ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}/${{ steps.artifacts.outputs.image_path }}
-            ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}/${{ steps.artifacts.outputs.image_path }}.sha256
-            ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}/${{ steps.artifacts.outputs.image_path }}.md5
-          name: "OrangeFox Recovery for Infinix GT 30 Pro (X6873) - ${{ steps.artifacts.outputs.build_date }}"
+          name: OrangeFox-${{ steps.artifacts.outputs.build_version }}-Unofficial-${{ github.event.inputs.DEVICE_NAME }}-${{ steps.artifacts.outputs.build_date }}
           tag_name: v${{ steps.artifacts.outputs.build_date }}-${{ github.run_number }}
           body: |
-            ## ⚠️ DISCLAIMER - READ BEFORE FLASHING
-            
-            **DO IT AT YOUR OWN RISK!**
-            
-            - This build is still in **TESTING PHASE** and may contain bugs
-            - I am NOT responsible for any damage to your device, data loss, or any other issues
-            - Always make a complete backup of your device before flashing
-            - Ensure your device battery is at least 50% charged before flashing
-            
+            > [!WARNING]
+            > **DO IT AT YOUR OWN RISK**
+            > This is a **testing build** and may contain bugs or instability. The maintainer is not responsible for any damage to your device, data loss, or any other issues that may occur.
+
+            > [!IMPORTANT]
+            > **TESTING PHASE** - This build is intended for testing purposes only. Do not try if you not acknowledge the risk!
+
             ---
-            
-            ## 📱 Device Information
-            
-            | Info | Details |
-            |------|---------|
-            | Device | Infinix GT 30 Pro |
-            | Codename | X6873 / Infinix-X6873 |
-            | Platform | MediaTek MT6897 |
-            | OrangeFox Version | ${{ steps.artifacts.outputs.build_version }} |
-            | Build Date | ${{ steps.artifacts.outputs.build_date }} |
-            | Build Target | ${{ github.event.inputs.BUILD_TARGET }} |
-            | Manifest Branch | ${{ github.event.inputs.MANIFEST_BRANCH }} |
-            
+
+            ### 📱 Device Information
+
+            | Property | Value |
+            | :-------- | :---- |
+            | **Device** | Infinix GT 30 Pro |
+            | **Codename** | X6873 |
+            | **Platform** | MediaTek MT6897 |
+            | **Android Version** | 15 (A15) |
+            | **OrangeFox Version** | ${{ steps.artifacts.outputs.build_version }} |
+            | **Build Date** | ${{ steps.artifacts.outputs.build_date }} |
+            | **Build Type** | ${{ github.event.inputs.BUILD_TARGET }} |
+
             ---
-            
-            ## 📥 Download Information
-            
-            | File | Size |
-            |------|------|
-            | ${{ steps.artifacts.outputs.image_name }} | ${{ steps.artifacts.outputs.image_size }} |
-            
-            ### Checksums
-            ```
-            SHA256: ${{ steps.artifacts.outputs.sha256 }}
-            MD5:    ${{ steps.artifacts.outputs.md5 }}
-            ```
-            
-            **Verify after download:**
+
+            ### 📲 Flashing Instructions
+
             ```bash
-            # Verify SHA256
-            sha256sum -c vendor_boot.img.sha256
-            
-            # Verify MD5
-            md5sum -c vendor_boot.img.md5
-            ```
-            
-            ---
-            
-            ## 📲 Flashing Instructions
-            
-            ### Method 1: Fastboot (Recommended)
-            ```bash
-            # Boot to fastboot mode
-            # Connect device via USB
-            
-            # Flash vendor_boot partition
             fastboot flash vendor_boot vendor_boot.img
-            
-            # Reboot to recovery
             fastboot reboot recovery
             ```
-            
-            ### Method 2: Using Custom Recovery
-            1. Copy `vendor_boot.img` to device storage
-            2. Boot to current recovery
-            3. Go to Install → Select Image
-            4. Select `vendor_boot.img`
-            5. Choose `vendor_boot` partition
-            6. Swipe to flash
-            7. Reboot to recovery
-            
+
             ---
-            
-            ## 🐛 Reporting Issues
-            
-            **If you encounter any issues, please help by providing logs!**
-            
-            1. **Recovery Log**: In OrangeFox, go to **Menu → Copy Log to SD**
-            2. **Last_kmsg**: After a kernel panic/crash
-            3. **dmesg**: If possible, capture via ADB
-            
-            When reporting issues, please include:
-            - Device model and current firmware version
-            - Steps to reproduce the issue
-            - Recovery log (`recovery.log`)
-            - Screenshot of the error (if applicable)
-            
-            **Issue Tracker:** [GitHub Issues](https://github.com/hoshiyomiX/recovery-device_infinix_Infinix-X6873/issues)
-            
+
+            ### 🔐 Verify Checksum
+
+            | Hash | Value |
+            | :--- | :---- |
+            | **SHA256** | `${{ steps.artifacts.outputs.sha256 }}` |
+            | **MD5** | `${{ steps.artifacts.outputs.md5 }}` |
+
+            **Windows (PowerShell):**
+            ```powershell
+            # SHA256
+            Get-FileHash vendor_boot.img -Algorithm SHA256
+
+            # MD5
+            Get-FileHash vendor_boot.img -Algorithm MD5
+            ```
+
+            **Linux/macOS:**
+            ```bash
+            # SHA256
+            sha256sum vendor_boot.img
+
+            # MD5
+            md5sum vendor_boot.img
+            ```
+
             ---
-            
-            ## ✅ Features
-            
-            - Touch support
-            - FBE v2 Decryption support
-            - USB OTG support
-            - Backup/Restore functionality
-            - Terminal access
-            - File manager
-            
-            ---
-            
-            ## ❌ Known Issues
-            
-            - Report any issues you find
-            
-            ---
-            
-            **Built with GitHub Actions** | [Workflow Run](https://github.com/hoshiyomiX/recovery-device_infinix_Infinix-X6873/actions/runs/${{ github.run_id }})
+
+            ### 🤝 Need your help!
+
+            > [!NOTE]
+            > **Help improve this build!** Please take logs to speed up fixes & stability improvements.
+
+            **How to capture logs:**
+            1. In OrangeFox: **Menu → Copy Log to SD**
+            2. Or via ADB: `adb pull /tmp/recovery.log`
+
+            **Submit via:** [GitHub Issues](https://github.com/hoshiyomiX/recovery-device_infinix_Infinix-X6873/issues) or [Telegram](https://t.me/hoshiyomi_id)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
