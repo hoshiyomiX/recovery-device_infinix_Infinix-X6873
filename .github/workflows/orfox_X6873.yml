@@ -584,26 +584,39 @@ jobs:
           echo "=== Output Directory Contents ==="
           ls -la "$OUT_DIR/" || true
 
-          case "$BUILD_TARGET" in
-            vendorbootimage)
-              IMAGE_FILE="vendor_boot.img"
-              ;;
-            recoveryimage)
-              IMAGE_FILE="recovery.img"
-              ;;
-            bootimage)
-              IMAGE_FILE="boot.img"
-              ;;
-            *)
-              IMAGE_FILE="*.img"
-              ;;
-          esac
-
+          # Priority: OrangeFox branded image > target-specific image > any .img
           IMAGE_PATH=""
-          if [ -f "$OUT_DIR/$IMAGE_FILE" ]; then
-            IMAGE_PATH="$OUT_DIR/$IMAGE_FILE"
-          else
+
+          # 1. First priority: OrangeFox branded image (e.g., OrangeFox-R11.3-Unofficial-X6873.img)
+          IMAGE_PATH=$(find "$OUT_DIR" -maxdepth 1 -name "OrangeFox-*.img" -type f | head -n1)
+          echo "Checking OrangeFox branded image: $IMAGE_PATH"
+
+          # 2. Second priority: target-specific image based on BUILD_TARGET
+          if [ -z "$IMAGE_PATH" ] || [ ! -f "$IMAGE_PATH" ]; then
+            case "$BUILD_TARGET" in
+              vendorbootimage)
+                if [ -f "$OUT_DIR/vendor_boot.img" ]; then
+                  IMAGE_PATH="$OUT_DIR/vendor_boot.img"
+                fi
+                ;;
+              recoveryimage)
+                if [ -f "$OUT_DIR/recovery.img" ]; then
+                  IMAGE_PATH="$OUT_DIR/recovery.img"
+                fi
+                ;;
+              bootimage)
+                if [ -f "$OUT_DIR/boot.img" ]; then
+                  IMAGE_PATH="$OUT_DIR/boot.img"
+                fi
+                ;;
+            esac
+            echo "Checking target-specific image: $IMAGE_PATH"
+          fi
+
+          # 3. Last resort: any .img file
+          if [ -z "$IMAGE_PATH" ] || [ ! -f "$IMAGE_PATH" ]; then
             IMAGE_PATH=$(find "$OUT_DIR" -maxdepth 1 -name "*.img" -type f | head -n1)
+            echo "Checking any .img file: $IMAGE_PATH"
           fi
 
           if [ -z "$IMAGE_PATH" ] || [ ! -f "$IMAGE_PATH" ]; then
