@@ -174,19 +174,10 @@ jobs:
           sudo rm -rf /opt/az 2>/dev/null || true
           sudo rm -rf /usr/lib/azure 2>/dev/null || true
 
-          # Clean apt cache and lists
-          echo "Cleaning apt cache..."
-          sudo apt-get clean -y
-          sudo rm -rf /var/lib/apt/lists/*
-          sudo rm -rf /var/cache/apt/archives/*
-
           # Remove Docker images (if any)
           echo "Removing Docker images..."
           sudo docker system prune -af 2>/dev/null || true
           sudo rm -rf /var/lib/docker 2>/dev/null || true
-
-          # Remove large documentation and man pages
-          sudo rm -rf /usr/share/doc /usr/share/man /usr/share/info 2>/dev/null || true
 
           # Clean journal logs
           sudo journalctl --vacuum-time=1s 2>/dev/null || true
@@ -195,6 +186,7 @@ jobs:
           sudo rm -rf /snap 2>/dev/null || true
 
           # Remove unused apt packages that take significant space
+          # NOTE: Do this BEFORE removing doc/man/info to avoid dpkg errors
           echo "Removing unused packages..."
           sudo apt-get remove -y --purge \
             azure-cli \
@@ -209,6 +201,13 @@ jobs:
           # Final apt clean
           sudo apt-get autoremove -y --purge 2>/dev/null || true
           sudo apt-get clean -y
+
+          # Remove large documentation and man pages (AFTER apt operations)
+          sudo rm -rf /usr/share/doc /usr/share/man 2>/dev/null || true
+          # Don't remove /usr/share/info - causes dpkg errors
+
+          # Clean apt cache (but keep package lists for install)
+          sudo rm -rf /var/cache/apt/archives/*
 
           echo ""
           echo "=== Disk Space After Cleanup ==="
@@ -241,6 +240,10 @@ jobs:
       - name: Prepare the build environment
         working-directory: ${{ steps.pwd.outputs.workspace-folder }}
         run: |
+          # IMPORTANT: Run apt update first to refresh package lists
+          echo "=== Updating package lists ==="
+          sudo apt-get update -qq
+
           # Install only essential packages (no apt upgrade - saves time)
           echo "=== Installing build dependencies ==="
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -yq --no-install-recommends \
