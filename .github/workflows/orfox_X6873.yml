@@ -315,19 +315,40 @@ jobs:
           cat "$DEVICE_PATH/AndroidProducts.mk"
 
       # --------------------------------------------------------
-      # Step 12: Build OrangeFox Recovery (OPTIMIZED)
+      # Step 12: Build OrangeFox Recovery (OPTIMIZED with proper ccache)
       # --------------------------------------------------------
       - name: Building recovery
         working-directory: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
         timeout-minutes: 180
         run: |
-          # Export build environment variables
+          # =====================================================
+          # CCACHE CONFIGURATION FOR ANDROID BUILD (CRITICAL!)
+          # =====================================================
+          # Android build system needs these specific variables
           export ALLOW_MISSING_DEPENDENCIES=true
+
+          # Ccache configuration - MUST be set before sourcing envsetup.sh
           export USE_CCACHE=1
+          export WITH_CCACHE=true
           export CCACHE_DIR=$HOME/.ccache
           export CCACHE_EXEC=$(which ccache)
-          export LC_ALL=C
           export CCACHE_COMPRESS=1
+          export CCACHE_COMPRESSLEVEL=6
+          export CCACHE_MAXSIZE=15G
+
+          # Enable ccache for clang (Android uses clang, not gcc!)
+          export CCACHE_CPP2=yes
+          export CCACHE_SLOPPINESS=time_macros,include_file_mtime,include_file_ctime,file_macro,clang_index_store
+
+          # Locale settings
+          export LC_ALL=C
+
+          # Show ccache config before build
+          echo "=== Ccache Configuration ==="
+          echo "CCACHE_DIR: $CCACHE_DIR"
+          echo "CCACHE_EXEC: $CCACHE_EXEC"
+          ccache -p | grep -E "max_size|compression|sloppiness" || true
+          echo ""
 
           # OrangeFox specific variables
           export FOX_BURNER_MAINTAINERS="${{ github.actor }}"
@@ -354,6 +375,9 @@ jobs:
           echo "Manifest: ${{ github.event.inputs.MANIFEST_BRANCH }}"
           echo "=========================================="
 
+          # Reset ccache stats before build
+          ccache -z
+
           # Source build environment
           set +e
           source build/envsetup.sh
@@ -364,6 +388,7 @@ jobs:
             echo ""
             echo "=== Performing Clean Build ==="
             make clean
+            ccache -C  # Clear ccache completely for clean build
             ccache -z
           fi
 
@@ -380,25 +405,41 @@ jobs:
           echo "TARGET_ARCH: $TARGET_ARCH"
           echo "TARGET_BUILD_TYPE: $TARGET_BUILD_TYPE"
 
+          # Verify ccache is detected by build system
+          echo ""
+          echo "=== Verifying Ccache Integration ==="
+          if [ -n "$(get_build_var CC_WRAPPER 2>/dev/null)" ]; then
+            echo "CC_WRAPPER: $(get_build_var CC_WRAPPER)"
+          fi
+          if [ -n "$(get_build_var CXX_WRAPPER 2>/dev/null)" ]; then
+            echo "CXX_WRAPPER: $(get_build_var CXX_WRAPPER)"
+          fi
+
           # Start build with optimized parallel jobs
           echo ""
           echo "=== Starting Build ==="
-          # Use all available cores minus 1 (more aggressive parallelism)
+          # Use all available cores for maximum parallelism
           JOB_COUNT=$(nproc)
           [ $JOB_COUNT -lt 2 ] && JOB_COUNT=2
 
           echo "Using $JOB_COUNT parallel jobs"
 
-          # Use make instead of mka for better control
-          make adbd $BUILD_TARGET -j$JOB_COUNT CC="ccache gcc" CXX="ccache g++" || {
+          # Use mka which properly respects ANDROID build system ccache settings
+          mka adbd $BUILD_TARGET -j$JOB_COUNT || {
             echo "Build failed, retrying with single thread..."
-            make adbd $BUILD_TARGET -j1 CC="ccache gcc" CXX="ccache g++"
+            mka adbd $BUILD_TARGET -j1
           }
 
-          # Show ccache stats
+          # Show ccache stats after build
           echo ""
-          echo "=== Ccache Statistics ==="
+          echo "============================================"
+          echo "  CCACHE STATISTICS (IMPORTANT - VERIFY)"
+          echo "============================================"
           ccache -s
+          echo ""
+          echo "Cache directory size:"
+          du -sh $CCACHE_DIR || true
+          echo "============================================"
 
       # --------------------------------------------------------
       # Step 13: Check output directory
