@@ -277,13 +277,13 @@ jobs:
           git config --global checkout.defaultRemote origin
 
       # --------------------------------------------------------
-      # Step 6: Setup ccache (OPTIMIZED - larger size)
+      # Step 6: Setup ccache (FIXED - use absolute path)
       # --------------------------------------------------------
       - name: Setup ccache
         if: github.event.inputs.CLEAN_BUILD != 'true'
         uses: actions/cache@v4
         with:
-          path: ~/.ccache
+          path: /home/runner/.ccache
           key: ofox-ccache-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_number }}
           restore-keys: |
             ofox-ccache-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ github.event.inputs.DEVICE_NAME }}-
@@ -291,12 +291,24 @@ jobs:
 
       - name: Configure ccache
         run: |
-          mkdir -p ~/.ccache
-          # Increased cache size and added compression
-          ccache -M 15G
-          ccache -o compression=true
-          ccache -o compression_level=6
+          # Create ccache directory with absolute path
+          sudo mkdir -p /home/runner/.ccache
+          sudo chown -R runner:runner /home/runner/.ccache
+          
+          # Configure ccache
+          ccache --set-config=cache_dir=/home/runner/.ccache
+          ccache --set-config=max_size=15G
+          ccache --set-config=compression=true
+          ccache --set-config=compression_level=6
+          ccache --set-config=sloppiness=time_macros,include_file_mtime,include_file_ctime,file_macro,clang_index_store
+          
+          # Verify configuration
+          echo "=== Ccache Configuration ==="
+          ccache -p | grep -E "cache_dir|max_size|compression|sloppiness"
           ccache -z
+          echo "=== Ccache directory ==="
+          ls -la /home/runner/.ccache/ || true
+          du -sh /home/runner/.ccache/ || true
 
       # --------------------------------------------------------
       # Step 7: Increase Swap Space
@@ -400,7 +412,7 @@ jobs:
           cat "$DEVICE_PATH/AndroidProducts.mk"
 
       # --------------------------------------------------------
-      # Step 12: Build OrangeFox Recovery (OPTIMIZED with proper ccache)
+      # Step 12: Build OrangeFox Recovery (FIXED ccache integration)
       # --------------------------------------------------------
       - name: Building recovery
         working-directory: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
@@ -409,19 +421,14 @@ jobs:
           # =====================================================
           # CCACHE CONFIGURATION FOR ANDROID BUILD (CRITICAL!)
           # =====================================================
+          # Use ABSOLUTE path for ccache (must match actions/cache path)
+          export CCACHE_DIR=/home/runner/.ccache
+          
           # Android build system needs these specific variables
           export ALLOW_MISSING_DEPENDENCIES=true
-
-          # Ccache configuration - MUST be set before sourcing envsetup.sh
           export USE_CCACHE=1
           export WITH_CCACHE=true
-          export CCACHE_DIR=$HOME/.ccache
           export CCACHE_EXEC=$(which ccache)
-          export CCACHE_COMPRESS=1
-          export CCACHE_COMPRESSLEVEL=6
-          export CCACHE_MAXSIZE=15G
-
-          # Enable ccache for clang (Android uses clang, not gcc!)
           export CCACHE_CPP2=yes
           export CCACHE_SLOPPINESS=time_macros,include_file_mtime,include_file_ctime,file_macro,clang_index_store
 
@@ -432,8 +439,11 @@ jobs:
           echo "=== Ccache Configuration ==="
           echo "CCACHE_DIR: $CCACHE_DIR"
           echo "CCACHE_EXEC: $CCACHE_EXEC"
-          ccache -p | grep -E "max_size|compression|sloppiness" || true
+          ccache -p | grep -E "cache_dir|max_size|compression|sloppiness" || true
           echo ""
+          echo "=== Ccache Directory Before Build ==="
+          du -sh $CCACHE_DIR || true
+          ls -la $CCACHE_DIR/ || true
 
           # OrangeFox specific variables
           export FOX_BURNER_MAINTAINERS="${{ github.actor }}"
@@ -544,7 +554,7 @@ jobs:
         if: github.event.inputs.CLEAN_BUILD != 'true'
         uses: actions/cache@v4
         with:
-          path: ~/.ccache
+          path: /home/runner/.ccache
           key: ofox-ccache-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_number }}
 
       # --------------------------------------------------------
