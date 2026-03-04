@@ -544,12 +544,32 @@ jobs:
           # Verify ccache is detected by build system
           echo ""
           echo "=== Verifying Ccache Integration ==="
-          if [ -n "$(get_build_var CC_WRAPPER 2>/dev/null)" ]; then
-            echo "CC_WRAPPER: $(get_build_var CC_WRAPPER)"
+          
+          # Force ccache wrappers for Android build
+          # Method 1: Set environment variables that Android build system reads
+          export CCACHE_EXEC=$(which ccache)
+          export ANDROID_CCACHE_DIR=$CCACHE_DIR
+          
+          # Method 2: Check if build system supports wrappers
+          CC_WRAP=$(get_build_var CC_WRAPPER 2>/dev/null || echo "")
+          CXX_WRAP=$(get_build_var CXX_WRAPPER 2>/dev/null || echo "")
+          echo "CC_WRAPPER from build system: $CC_WRAP"
+          echo "CXX_WRAPPER from build system: $CXX_WRAP"
+          
+          # Method 3: Set wrappers explicitly if not set
+          if [ -z "$CC_WRAP" ]; then
+            echo "Setting CC_WRAPPER=ccache explicitly"
+            export CC_WRAPPER="ccache"
           fi
-          if [ -n "$(get_build_var CXX_WRAPPER 2>/dev/null)" ]; then
-            echo "CXX_WRAPPER: $(get_build_var CXX_WRAPPER)"
+          if [ -z "$CXX_WRAP" ]; then
+            echo "Setting CXX_WRAPPER=ccache explicitly"  
+            export CXX_WRAPPER="ccache"
           fi
+          
+          # Verify ccache is working
+          echo ""
+          echo "=== Ccache Status Before Build ==="
+          ccache -s | head -20
 
           # Start build with optimized parallel jobs
           echo ""
