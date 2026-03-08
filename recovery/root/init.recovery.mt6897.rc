@@ -39,6 +39,10 @@ on boot
     start vendor.usb_hal
     start vendor.usb_gadget_hal
     start vendor.vibrator_hal
+    
+    # Enable ADB - this triggers adbd start via property trigger in init.recovery.usb.rc
+    # Required because sys.usb.config=adb is not set anywhere else
+    setprop sys.usb.config adb
 
 on property:persist.vendor.mtk.pl_lnk=1
     symlink /dev/block/mapper/pl_a /dev/block/by-name/preloader_raw_a
@@ -238,12 +242,3 @@ service vendor.vibrator_hal /vendor/bin/hw/android.hardware.vibrator-service.med
     setenv ENV_RICHTAP_CONFIG_PATH /vendor/etc/aac_richtap.config
     disabled
     seclabel u:r:recovery:s0
-
-# USB OTG mode switching
-on property:sys.usb.config=adb && property:sys.usb.configfs=1
-    start vendor.usb_hal
-    start vendor.usb_gadget_hal
-
-on property:sys.usb.config=mtp,adb && property:sys.usb.configfs=1
-    start vendor.usb_hal
-    start vendor.usb_gadget_hal

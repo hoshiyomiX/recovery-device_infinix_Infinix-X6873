@@ -6,6 +6,11 @@ ro.sys.usb.storage.type=mtp
 ro.sys.usb.mtp.whql.enable=0
 ro.sys.usb.mtp.device_type=3
 
+# ADB Configuration - Enable ADB by default for recovery
+sys.usb.config=adb
+ro.adb.secure=0
+service.adb.root=1
+
 # Recovery USB IDs
 ro.recovery.usb.vid=18D1
 ro.recovery.usb.adb.pid=D001
