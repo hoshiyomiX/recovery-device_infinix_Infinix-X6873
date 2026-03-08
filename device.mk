@@ -411,12 +411,15 @@ PRODUCT_COPY_FILES += \
     device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/android.hardware.gatekeeper-service.trustonic:vendor/bin/hw/android.hardware.gatekeeper-service.trustonic \
     device/infinix/Infinix-X6873/recovery/root/vendor/bin/hw/vendor.trustonic.tee@1.1-service:vendor/bin/hw/vendor.trustonic.tee@1.1-service
 
-# Copy Trustonic TEE Libraries
+# Copy Trustonic TEE Libraries - CRITICAL: libMcClient.so is required for TEE communication
 PRODUCT_COPY_FILES += \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libMcClient.so:vendor/lib64/libMcClient.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.trustonic.tee@1.0.so:vendor/lib64/vendor.trustonic.tee@1.0.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.trustonic.tee@1.1.so:vendor/lib64/vendor.trustonic.tee@1.1.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/vendor.trustonic.tee.tui@1.0.so:vendor/lib64/vendor.trustonic.tee.tui@1.0.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libTEECommon.so:vendor/lib64/libTEECommon.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libladder.so:vendor/lib64/libladder.so \
+    device/infinix/Infinix-X6873/recovery/root/vendor/lib64/libsecure_load.so:vendor/lib64/libsecure_load.so \
     device/infinix/Infinix-X6873/recovery/root/vendor/lib64/android.system.keystore2-V1-ndk.so:vendor/lib64/android.system.keystore2-V1-ndk.so
 
 # Copy system_ext TEE Libraries

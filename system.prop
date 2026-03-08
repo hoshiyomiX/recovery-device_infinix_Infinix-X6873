@@ -1,3 +1,8 @@
+# ============================================================
+# System Properties for Infinix X6873 Recovery
+# Based on firmware dump analysis
+# ============================================================
+
 # Fstab
 ro.postinstall.fstab.prefix=/system
 
@@ -19,31 +24,49 @@ ro.recovery.usb.fastboot.pid=4EE0
 # USB Controller
 sys.usb.controller=112b0000.dwc3
 
-# Crypto
+# ============================================================
+# Crypto - FBE v2 Configuration (from firmware vendor/build.prop)
+# Reference: https://source.android.com/docs/security/encryption/file-based
+# ============================================================
 ro.crypto.volume.filenames_mode=aes-256-cts
 ro.crypto.volume.options=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized
 ro.crypto.metadata.encryption=aes-256-xts
+ro.crypto.volume.metadata.encryption=aes-256-xts
+ro.crypto.type=file
+ro.crypto.state=encrypted
 
-# Gatekeeper
+# ============================================================
+# Gatekeeper - Trustonic TEE
+# Reference: vendor/build.prop from firmware
+# ============================================================
 ro.hardware.gatekeeper=trustonic
 
-# Keymaster
+# ============================================================
+# Keymint/Keymaster - AIDL v3 support (Android 15+)
+# Reference: vendor/build.prop from firmware
+# ============================================================
 ro.hardware.kmsetkey=trustonic
+ro.hardware.keymaster=trustonic
+ro.hardware.keymint=trustonic
+ro.hardware.keymint.version=3
+ro.security.keymint.version=3
 ro.vendor.keymaster_version=7.0
+keymint_ver=4.1
 
-# TEE
+# ============================================================
+# Trustonic TEE Configuration
+# Reference: vendor/build.prop from firmware
+# ============================================================
 ro.vendor.mtk_tee_gp_support=1
 ro.vendor.mtk_trustonic_tee_support=1
 ro.vendor.tran.rpmb.support=1
+ro.hardware.paytrigger=trustonic
 
-# Keymaster/Keymint - AIDL v3 support
-keymaster_ver=4.1
-ro.hardware.keymaster=trustonic
-ro.hardware.keymint=trustonic
-ro.security.keymint.version=3
-
-# Trustonic TEE ready flag
+# Trustonic TEE ready flag (set by init when TEE service is running)
 ro.vendor.trustonic.ready=true
 
+# ============================================================
+# Device Specific
+# ============================================================
 # Vibrator
 ro.vendor.tran.vibrator.option=single

@@ -1,13 +1,24 @@
+# ============================================================
+# Infinix X6873 Recovery Init Configuration
+# Based on firmware dump analysis for proper decryption flow
+# Reference: https://source.android.com/docs/core/architecture/android/init
+# ============================================================
+
 import /init.tee.rc
 import /init.recovery.usb.rc
 
 on init
     export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
-    setprop crypto.ready 1
     
     # USB controller setup
     setprop sys.usb.controller 112b0000.dwc3
     setprop sys.usb.configfs 1
+    
+    # Crypto properties from firmware vendor/build.prop
+    setprop ro.hardware.kmsetkey trustonic
+    setprop ro.hardware.gatekeeper trustonic
+    setprop ro.vendor.mtk_trustonic_tee_support 1
+    setprop ro.crypto.volume.filenames_mode aes-256-cts
 
 on fs
     install_keyring
@@ -28,11 +39,21 @@ on post-fs
     symlink /dev/block/mapper/pl_a /dev/block/by-name/preloader_raw_a
     symlink /dev/block/mapper/pl_b /dev/block/by-name/preloader_raw_b
 
-    # Create directories for Transsion security services
+    # Create directories for Transsion security services (from firmware tee.rc)
+    mkdir /mnt/vendor/persist 0771 system system
+    mkdir /mnt/vendor/persist/mcRegistry 0771 system system
+    mkdir /mnt/vendor/persist/keybox 0771 system system
+    mkdir /mnt/vendor/persist/startPara 0777 system system
     mkdir /mnt/vendor/persist/rpmb 0700 system system
+    mkdir /mnt/vendor/persist/paytrigger 0777 system system
+    mkdir /tranfs 0771 system system
     mkdir /tranfs/rpmb 0700 system system
-    mkdir /mnt/vendor/persist/startPara 0700 system system
     mkdir /tranfs/startPara 0700 system system
+    
+    # Set ownership for persist
+    chown system system /mnt/vendor/persist
+    chmod 0771 /mnt/vendor/persist
+    restorecon /mnt/vendor/persist
 
 on boot
     start mtk.plpath.utils.link
@@ -41,7 +62,6 @@ on boot
     start vendor.vibrator_hal
     
     # Enable ADB - this triggers adbd start via property trigger in init.recovery.usb.rc
-    # Required because sys.usb.config=adb is not set anywhere else
     setprop sys.usb.config adb
 
 on property:persist.vendor.mtk.pl_lnk=1
@@ -50,7 +70,7 @@ on property:persist.vendor.mtk.pl_lnk=1
     symlink /dev/block/mapper/pl_a /dev/block/platform/bootdevice/by-name/preloader_raw_a
     symlink /dev/block/mapper/pl_b /dev/block/platform/bootdevice/by-name/preloader_raw_b
 
-# FSTAB_RAW2(lk2,bootloader2) of fstab.in.emmc, but without bootloader2 mount point
+# FSTAB_RAW2(lk2,bootloader2) of fstab.in.emmc
     symlink /dev/block/by-name/lk1 /dev/block/by-name/bootloader1
     symlink /dev/block/by-name/lk2 /dev/block/by-name/bootloader2
 
@@ -81,25 +101,33 @@ service mtk.plpath.utils.link /system/bin/mtk_plpath_utils
     disabled
     seclabel u:r:recovery:s0
 
-# Trustonic TEE Service - must start first
-service vendor.trustonic-tee /vendor/bin/hw/vendor.trustonic.tee@1.1-service
+# ============================================================
+# DECRYPTION SERVICE STARTUP SEQUENCE
+# Based on firmware init files analysis
+# Reference: vendor/etc/init/*.rc from firmware dump
+# ============================================================
+
+# Trustonic TEE Service - provides TEE communication layer
+# Reference: vendor/etc/init/vendor.trustonic.tee@1.1-service.rc
+service tee-1-1 /vendor/bin/hw/vendor.trustonic.tee@1.1-service
     class hal
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Gatekeeper Service - Trustonic version
-service vendor.gatekeeper-trustonic /vendor/bin/hw/android.hardware.gatekeeper-service.trustonic
+# Reference: vendor/etc/init/android.hardware.gatekeeper-service.trustonic.rc
+# Note: Firmware uses service name "vendor.gatekeeper-default"
+service vendor.gatekeeper-default /vendor/bin/hw/android.hardware.gatekeeper-service.trustonic
     class early_hal
-    interface android.hardware.gatekeeper@1.0::IGatekeeper default
-    interface android.hardware.gatekeeper.IGatekeeper/default
-    user root
-    group root
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Keymint Service - Trustonic version
+# Reference: vendor/etc/init/android.hardware.security.keymint@3.0-service.trustonic.rc
 service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustonic
     class early_hal
     interface android.hardware.keymaster@4.0::IKeymasterDevice default
@@ -108,112 +136,103 @@ service vendor.keymint-trustonic /vendor/bin/hw/android.hardware.security.keymin
     interface android.hardware.security.keymint.IRemotelyProvisionedComponent/default
     interface android.hardware.security.sharedsecret.ISharedSecret/default
     interface android.hardware.security.secureclock.ISecureClock/default
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Transsion RPMB Service - required for secure storage
-service vendor.rpmbservice /vendor/bin/hw/vendor.transsion.hardware.security.rpmbservice@1.0-service
+# Reference: vendor/etc/init/vendor.transsion.hardware.security.rpmbservice@1.0-service.rc
+service rpmbservice /vendor/bin/hw/vendor.transsion.hardware.security.rpmbservice@1.0-service
     class hal
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Transsion Device Authentication Service
+# Reference: vendor/etc/init/vendor.transsion.hardware.security.deviceauthen@2.0-service.rc
 service deviceauthen_hal_service /vendor/bin/hw/vendor.transsion.hardware.security.deviceauthen@2.0-service
     class hal
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Transsion HAP Service
 service vendor.hap_hal /vendor/bin/hw/vendor.transsion.hardware.security.hap@1.0-service
     class late_start
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Transsion Critical Parameter Verification Service
 service trancriticalparavfy_service /vendor/bin/hw/vendor.transsion.hardware.security.trancriticalparavfy@1.0-service
     class hal
-    user root
-    group root system
+    user system
+    group system
     disabled
     seclabel u:r:recovery:s0
 
 # Trustonic Keybox Check Service
 service trustonic_check_keybox_service /vendor/bin/kmsetkey_ca.trustonic -c
     class late_start
-    user root
-    group root system
+    user system
+    group system
     oneshot
     disabled
     seclabel u:r:recovery:s0
 
-# Start services when crypto is ready
-on property:crypto.ready=1
-    start vendor.trustonic-tee
-    start vendor.keymint-trustonic
-    start vendor.rpmbservice
+# ============================================================
+# SERVICE STARTUP TRIGGERS - PROPER DEPENDENCY CHAIN
+# Reference: Android Init Language - Property Triggers
+# https://android.googlesource.com/platform/system/core/+/master/init/README.md
+# ============================================================
 
-# Start services when hwservicemanager is ready
+# Phase 1: Start mobicore (mcDriverDaemon) when hwservicemanager is ready
+# Note: mobicore service is defined in init.tee.rc
 on property:hwservicemanager.ready=true
     start mobicore
-    start vendor.trustonic-tee
+
+# Phase 2: Start TEE service after mobicore daemon is running
+on property:init.svc.mobicore=running
+    start tee-1-1
+
+# Phase 3: Start security HALs after TEE is ready
+on property:init.svc.tee-1-1=running
+    setprop ro.vendor.trustonic.ready true
     start vendor.keymint-trustonic
-    start vendor.rpmbservice
+    start rpmbservice
     start deviceauthen_hal_service
 
-# Trustonic TEE ready - trigger gatekeeper start
-# Set property explicitly since triggers only fire on property CHANGE
-on property:init.svc.vendor.trustonic-tee=running
-    setprop ro.vendor.trustonic.ready true
-    start vendor.gatekeeper-trustonic
-
-# Gatekeeper starts after Trustonic TEE is ready
+# Phase 4: Start gatekeeper after TEE ready (from firmware gatekeeper rc)
 on property:ro.vendor.trustonic.ready=true
-    start vendor.gatekeeper-trustonic
+    start vendor.gatekeeper-default
 
-on property:ro.crypto.state=unsupported
-    stop mobicore
-    stop vendor.gatekeeper-trustonic
-    stop vendor.keymint-trustonic
-    stop vendor.trustonic-tee
-    stop vendor.rpmbservice
-    stop deviceauthen_hal_service
+# Phase 5: Start additional services after keymint is running
+on property:init.svc.vendor.keymint-trustonic=running
+    start trancriticalparavfy_service
+    start vendor.hap_hal
 
-on property:ro.crypto.state=unencrypted
-    stop mobicore
-    stop vendor.gatekeeper-trustonic
-    stop vendor.keymint-trustonic
-    stop vendor.trustonic-tee
-    stop vendor.rpmbservice
-    stop deviceauthen_hal_service
+# ============================================================
+# CLEANUP TRIGGERS
+# ============================================================
 
 on property:twrp.decrypt.done=true
     stop mobicore
-    stop vendor.gatekeeper-trustonic
+    stop vendor.gatekeeper-default
     stop vendor.keymint-trustonic
-    stop vendor.trustonic-tee
-    stop vendor.rpmbservice
-    stop deviceauthen_hal_service
-
-on property:crypto.ready=0
-    stop mobicore
-    stop vendor.gatekeeper-trustonic
-    stop vendor.keymint-trustonic
-    stop vendor.trustonic-tee
-    stop vendor.rpmbservice
+    stop tee-1-1
+    stop rpmbservice
     stop deviceauthen_hal_service
 
 on post-fs-data
     mkdir /data/vendor_de 0770 system system
     mkdir /data/vendor_de/0 0770 system system
     mkdir /data/vendor_de/0/cryptoeng 0770 system system
+    mkdir /data/vendor/key_provisioning 0771 system system
+    mkdir /data/vendor/mcRegistry 0775 system system
 
     start health-hal-2-1
 
