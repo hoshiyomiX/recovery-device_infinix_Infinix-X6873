@@ -1,7 +1,243 @@
-# Module dependencies for Infinix X6873 Recovery
+8250_mtk.ko:
+adsp.ko:
+aee_aed.ko:
+aee_hangdet.ko:
+aee_rs.ko:
+arm_dsu_pmu.ko:
+aw86224_light.ko:
+aw9620x.ko:
+blocktag.ko:
 bootprof.ko:
+bus-parity.ko:
+cache-parity.ko:
+clk-bringup.ko:
+clk-chk-mt6897.ko: clk-common.ko
+clk-common.ko:
+clk-dbg-mt6897.ko: clk-common.ko
+clk-disable-unused.ko:
+clk-fmeter-mt6897.ko:
+clk-mt6897-adsp.ko: clk-common.ko
+clk-mt6897-bus.ko: clk-common.ko
+clk-mt6897-cam.ko: clk-common.ko
+clk-mt6897-ccu.ko: clk-common.ko
+clk-mt6897-img.ko: clk-common.ko
+clk-mt6897-mdpsys.ko: clk-common.ko
+clk-mt6897-mmsys.ko: clk-common.ko
+clk-mt6897-peri.ko: clk-common.ko
+clk-mt6897-vcodec.ko: clk-common.ko
+clk-mt6897-vlp.ko: clk-common.ko
+clk-mt6897.ko: clk-common.ko
+clkbuf.ko:
+cmdq-platform-mt6897.ko: cmdq_helper_inf.ko
+cmdq_helper_inf.ko:
+cqhci.ko:
+dbg_error_flag.ko:
+dbgtop-drm.ko:
+device-apc-common.ko:
+device-apc-mt6897.ko: device-apc-common.ko
+drm_display_helper.ko:
+drm_dma_helper.ko:
+emi-mpu.ko: emi.ko
+emi-slb.ko: emi.ko
 emi.ko:
+et5904.ko:
+extcon-mtk-usb.ko:
+extdev_io_class.ko:
+ffa_v10.ko:
+gpueb.ko:
+haptic_drv_hv.ko:
+i2c-mt65xx.ko:
+industrialio-triggered-buffer.ko:
+iommu_debug.ko:
+iommu_secure.ko:
+irq-dbg.ko:
+isee-ffa.ko: ffa_v10.ko
+kfifo_buf.ko:
+last_bus.ko:
+leds-mtk-disp.ko:
+leds-mtk-pwm.ko:
+leds-mtk.ko:
+log_store.ko:
+low_latency_sched.ko:
 mcDrvModule.ko:
-rpmb.ko:
-rpmb-mtk.ko: rpmb.ko
+mcupm.ko:
+mdp_drv_mt6897.ko:
+mediatek-cpufreq-hw.ko:
+mediatek-drm-gateic.ko:
+mediatek-drm-panel-drv.ko:
+mediatek-drm.ko:
+mkp.ko:
+mmprofile.ko:
+mmqos-common.ko:
+mmqos-mt6897.ko: mmqos-common.ko
+monitor_hang.ko:
+mrdump.ko:
+mt6315-regulator.ko:
+mt6338-core.ko:
+mt6363-regulator.ko:
+mt6368-regulator.ko:
+mt6375-adc.ko: mt6375.ko
+mt6375-auxadc.ko: mt6375.ko
+mt6375-battery.ko: mt6375.ko
+mt6375-charger.ko: mt6375.ko
+mt6375.ko:
+mt6685-audclk.ko: mt6685-core.ko
+mt6685-core.ko:
+mt6897_dcm.ko:
+mtk-afe-external.ko:
+mtk-cmdq-drv-ext.ko: cmdq_helper_inf.ko
+mtk-dvfsrc-devfreq.ko: mtk-dvfsrc.ko
+mtk-dvfsrc-helper.ko:
+mtk-dvfsrc-regulator.ko: mtk-dvfsrc.ko
+mtk-dvfsrc.ko:
+mtk-emi.ko:
+mtk-icc-core.ko:
+mtk-kpd.ko:
+mtk-mbox-mailbox.ko: mtk-mbox.ko
+mtk-mbox.ko:
+mtk-mmc-dbg.ko: mtk-mmc.ko
+mtk-mmc.ko:
+mtk-mmdvfs-debug.ko: mtk-mmdvfs.ko
+mtk-mmdvfs-ftrace.ko: mtk-mmdvfs.ko
+mtk-mmdvfs-v3-start.ko: mtk-mmdvfs-v3.ko
+mtk-mmdvfs-v3.ko: mtk-mmdvfs.ko
+mtk-mmdvfs.ko:
+mtk-mminfra-debug.ko:
+mtk-mminfra-imax.ko:
+mtk-mml-mt6897.ko: mtk-mml.ko
+mtk-mml.ko:
+mtk-pm-domain-disable-unused.ko:
+mtk-pmic-keys.ko:
+mtk-pmic-wrap.ko:
+mtk-scpsys-bringup.ko:
+mtk-scpsys-mt6897.ko: mtk-scpsys.ko
+mtk-scpsys.ko:
+mtk-smi-dbg.ko: mtk-smi.ko
+mtk-smi.ko:
+mtk-socinfo.ko:
+mtk-spmi-pmic-adc.ko: spmi-mtk-pmif.ko
+mtk-spmi-pmic.ko:
+mtk-swpm-perf-arm-pmu.ko:
+mtk-uart-apdma.ko:
+mtk-vmm-spm.ko:
+mtk_battery_oc_throttling.ko:
+mtk_bp_thl.ko:
+mtk_dcm.ko:
+mtk_disp_notify.ko:
+mtk_dramc.ko:
+mtk_dynamic_loading_throttling.ko:
+mtk_gpu_hal.ko:
+mtk_gpufreq_wrapper.ko:
+mtk_iommu.ko:
+mtk_low_battery_throttling.ko:
+mtk_mdpm.ko:
+mtk_panel_ext.ko:
+mtk_pbm.ko:
+mtk_printk_ctrl.ko:
+mtk_rpmsg_mbox.ko: mtk-mbox.ko
+mtk_slbc.ko:
+mtk_sync.ko:
+mtk_tinysys_ipi.ko:
+mtk_wdt.ko:
+mtu3.ko:
+mux_switch.ko:
+nfc_i2c.ko:
+nvmem_mtk-devinfo.ko:
+pca_tfcp_ta.ko:
+pd-chk-mt6897.ko:
+pd_dbg_info.ko:
+phy-mtk-ufs.ko:
+phy-mtk-xsphy.ko:
+pidmap.ko:
+pinctrl-mt6897.ko: pinctrl-mtk-v2.ko
+pinctrl-mtk-common-v2_debug.ko: pinctrl-mtk-v2.ko
+pinctrl-mtk-v2.ko:
+pmic_lbat_service.ko:
+pmic_lvsys_notify.ko:
+ps5170.ko:
+pwm-mtk-disp.ko:
+reboot-mode.ko:
+reset-ti-syscon.ko:
+rpmb-mtk.ko: rpmb.ko mcDrvModule.ko
+rpmb.ko: mcDrvModule.ko
+rpmb-mtk.ko:
+rt4831a_drv.ko:
+rt5133-regulator.ko:
+rt6160-regulator.ko:
+rt_pd_manager.ko:
+rtc-mt6685.ko: mt6685-core.ko
+sec-rng.ko:
+sec.ko:
+slbc_ipi.ko:
+slbc_mt6897.ko: slbc_ipi.ko
+slbc_trace.ko:
+smpu-hook-v1.ko:
+smpu.ko:
+spi-mt65xx.ko:
+spmi-mtk-mpu.ko: spmi-mtk-pmif.ko
+spmi-mtk-pmif.ko:
+syscon-reboot-mode.ko: reboot-mode.ko
+system_heap.ko:
+tc_adapter_class.ko:
+tc_algorithm_class.ko:
+tc_ambient_temp_det.ko:
+tc_audio.ko:
+tc_auto_test.ko:
+tc_charger_class.ko:
+tc_charger_framework.ko:
+tc_chg_type_det.ko:
+tc_common_class.ko:
+tc_gauge.ko:
+tc_hl7139a.ko:
+tc_hvdcp20_algo.ko:
+tc_lcd_notify.ko:
+tc_misc_intf.ko:
+tc_otg_ctrl.ko:
+tc_pd_adapter.ko:
+tc_pd_algo.ko:
+tc_pep20.ko:
+tc_pep50.ko:
+tc_pid_chg_algo.ko:
+tc_pmic.ko:
+tc_port_burning.ko:
+tc_sc8548_charger.ko:
+tc_ta_class.ko:
+tc_tc30_algo.ko:
+tc_tcpc.ko:
+tc_temp_forecast.ko:
+tc_tfcp_ta.ko:
+tcpc_class.ko:
+tcpc_mt6375.ko: tcpc_class.ko
+tcpci_late_sync.ko: tcpc_class.ko
 teeperf.ko: mcDrvModule.ko
+thd.ko:
+thermal_interface.ko:
+timer-mediatek.ko:
+tinysys-scmi.ko:
+tkv.ko:
+tkv_recovery.ko:
+tnek.ko:
+tran-proc-bootdevice-mod.ko:
+tran-ufshcd-core.ko:
+tran-ufshcd-pltfrm.ko: tran-ufshcd-core.ko
+tran_block.ko:
+tran_charge_transfer.ko:
+tran_cps4021.ko:
+tran_expand_key.ko:
+tran_perf_util.ko:
+tran_rhi.ko:
+tran_scsi_mod.ko:
+tran_sd_mod.ko:
+tran_usb_ctrl.ko:
+tran_wireless_manager.ko:
+tran_wireless_ta.ko:
+transsion_tranlog.ko:
+uarthub_drv.ko:
+ufs-mediatek-dbg.ko: ufs-mediatek-mod.ko
+ufs-mediatek-mod.ko: tran-ufshcd-pltfrm.ko
+usb_boost.ko:
+usb_dp_selector.ko:
+usb_meta.ko:
+vcp_status.ko:
+vtdr6126a_fhdp1224x2720_dsi_vdo_tm_144hz_x6873.ko:
+xhci-mtk-hcd-v2.ko:

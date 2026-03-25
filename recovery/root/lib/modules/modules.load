@@ -1,0 +1,223 @@
+# Kernel modules for Infinix X6873 Recovery (MT6897)
+# Load order matters - base modules first
+
+# Boot profiling
+bootprof.ko
+
+# Memory and EMI
+emi.ko
+emi-mpu.ko
+emi-slb.ko
+
+# Clock subsystem
+clk-common.ko
+clk-bringup.ko
+clk-disable-unused.ko
+clk-mt6897.ko
+clk-mt6897-adsp.ko
+clk-mt6897-bus.ko
+clk-mt6897-cam.ko
+clk-mt6897-ccu.ko
+clk-mt6897-img.ko
+clk-mt6897-mdpsys.ko
+clk-mt6897-mmsys.ko
+clk-mt6897-peri.ko
+clk-mt6897-vcodec.ko
+clk-mt6897-vlp.ko
+clk-chk-mt6897.ko
+clk-dbg-mt6897.ko
+clk-fmeter-mt6897.ko
+clkbuf.ko
+
+# Pin control
+pinctrl-mtk-v2.ko
+pinctrl-mt6897.ko
+pinctrl-mtk-common-v2_debug.ko
+
+# PMIC and regulators
+mtk-pmic-wrap.ko
+mt6359p-regulator.ko
+mt6363-regulator.ko
+mt6368-regulator.ko
+mt6315-regulator.ko
+rt5133-regulator.ko
+rt6160-regulator.ko
+
+# Power management
+mtk-scpsys.ko
+mtk-scpsys-mt6897.ko
+mtk-scpsys-bringup.ko
+mtk-lpm.ko
+mtk-lpm-plat-v1.ko
+mtk-lpm-dbg-common-v1.ko
+mtk-lpm-dbg-mt6897.ko
+mtk-pm-domain-disable-unused.ko
+mtk-dvfsrc.ko
+mtk-dvfsrc-helper.ko
+mtk-dvfsrc-regulator.ko
+mtk-dvfsrc-devfreq.ko
+
+# SCP/MCU
+gpueb.ko
+mcupm.ko
+mtk-tinysys-ipi.ko
+mtk-rpmsg-mbox.ko
+mtk-mbox.ko
+tinysys-scmi.ko
+
+# I2C and SPI
+i2c-mt65xx.ko
+spi-mt65xx.ko
+
+# DMA and memory
+mtk-cqdma.ko
+mtk-iommu.ko
+iommu_secure.ko
+iommu_debug.ko
+system_heap.ko
+
+# GPIO and interrupts
+gpio-mt6897.ko
+
+# Bus and interconnect
+mtk-icc-core.ko
+mmqos-common.ko
+mmqos-mt6897.ko
+
+# Thermal
+thermal_interface.ko
+
+# Display and DRM
+mediatek-drm.ko
+drm_display_helper.ko
+drm_dma_helper.ko
+pwm-mtk-disp.ko
+leds-mtk-disp.ko
+leds-mtk-pwm.ko
+leds-mtk.ko
+vtdr6126a_fhdp1224x2720_dsi_vdo_tm_144hz_x6873.ko
+
+# Backlight and haptics
+aw86224_light.ko
+aw9620x.ko
+haptic_drv_hv.ko
+
+# Touchscreen
+et5904.ko
+
+# Storage
+mtk-mmc.ko
+mtk-mmc-dbg.ko
+tran-ufshcd-core.ko
+tran-ufshcd-pltfrm.ko
+ufs-mediatek-mod.ko
+ufs-mediatek-dbg.ko
+cqhci.ko
+
+# USB
+xhci-mtk-hcd-v2.ko
+mtu3.ko
+extcon-mtk-usb.ko
+usb_boost.ko
+usb_dp_selector.ko
+usb_meta.ko
+tran_usb_ctrl.ko
+
+# Battery and charging
+mt6359p-regulator.ko
+mt6360_pmu_chg.ko
+mt6375.ko
+mt6375-adc.ko
+mt6375-auxadc.ko
+mt6375-battery.ko
+mt6375-charger.ko
+tc_charger_class.ko
+tc_charger_framework.ko
+tc_chg_type_det.ko
+tc_pd_adapter.ko
+tc_pd_algo.ko
+tc_pep20.ko
+tc_pep50.ko
+tc_hvdcp20_algo.ko
+tc_tc30_algo.ko
+tc_hl7139a.ko
+tc_sc8548_charger.ko
+hl7138.ko
+rt_pd_manager.ko
+mtk_battery_oc_throttling.ko
+tran_charge_transfer.ko
+tran_wireless_manager.ko
+tran_wireless_ta.ko
+tran_expand_key.ko
+pmic_lbat_service.ko
+pmic_lvsys_notify.ko
+
+# NFC
+nfc_i2c.ko
+
+# Sensors
+mtk-kpd.ko
+mtk-socinfo.ko
+mtk-pmic-keys.ko
+
+# AEE (Android Exception Engine)
+aee_aed.ko
+aee_hangdet.ko
+aee_rs.ko
+mrdump.ko
+monitor_hang.ko
+
+# Boot control
+blocktag.ko
+log_store.ko
+reboot-mode.ko
+syscon-reboot-mode.ko
+reset-ti-syscon.ko
+
+# TEE (Trustonic) - Critical for crypto
+mcDrvModule.ko
+teeperf.ko
+rpmb.ko
+rpmb-mtk.ko
+
+# Hardware monitoring
+aee_aed64.ko
+dbgtop-drm.ko
+last_bus.ko
+low_latency_sched.ko
+bus-parity.ko
+cache-parity.ko
+irq-dbg.ko
+dbg_error_flag.ko
+
+# Audio
+clk-mt6897-audiosys.ko
+mtk-afe-external.ko
+
+# Video/GPU
+clk-mt6897-vcodec.ko
+mtk_gpu_hal.ko
+mtk_gpufreq_wrapper.ko
+
+# Camera
+clk-mt6897-cam.ko
+clk-mt6897-ccu.ko
+clk-mt6897-img.ko
+mdp_drv_mt6897.ko
+
+# Watchdog
+mtk_wdt.ko
+
+# Miscellaneous
+zram.ko
+zsmalloc.ko
+timer-mediatek.ko
+8250_mtk.ko
+mtk-uart-apdma.ko
+uarthub_drv.ko
+tran_rhi.ko
+tran_scsi_mod.ko
+tran_sd_mod.ko
+tran_block.ko
+tran_perf_util.ko
+transsion_tranlog.ko
