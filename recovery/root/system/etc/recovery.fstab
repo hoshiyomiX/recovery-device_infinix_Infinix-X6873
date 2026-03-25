@@ -1,43 +1,38 @@
-# Android fstab for Infinix X6873 (MT6897)
-# Recovery File System Table
+# Android fstab file for Infinix X6873 (MT6897)
+# Reference: tecno_LH8n-TWRP structure
+# The filesystem that contains the filesystem checker binary (typically /system) cannot
+# specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
 
-# Boot partitions
-/boot              emmc        /dev/block/by-name/boot                              flags=backup=1;slotselect
-/vendor_boot       emmc        /dev/block/by-name/vendor_boot                       flags=backup=1;slotselect
-/dtbo              emmc        /dev/block/by-name/dtbo                              flags=backup=1;slotselect
-/init_boot         emmc        /dev/block/by-name/init_boot                         flags=backup=1;slotselect
-/vbmeta            emmc        /dev/block/by-name/vbmeta                            flags=backup=1;slotselect
-/vbmeta_system     emmc        /dev/block/by-name/vbmeta_system                     flags=backup=1;slotselect
-/vbmeta_vendor     emmc        /dev/block/by-name/vbmeta_vendor                     flags=backup=1;slotselect
+#<src>                          <mnt_point>             <type>          <mnt_flags and options>                                                                                                                 <fs_mgr_flags>
+# Logical partitions
+system                                                 /system                erofs    ro                                wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system                                                 /system                ext4     ro                                wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext                                             /system_ext            erofs    ro                                wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext                                             /system_ext            ext4     ro                                wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+product                                                /product               erofs    ro                                wait,slotselect,avb,logical,first_stage_mount
+product                                                /product               ext4     ro                                wait,slotselect,avb,logical,first_stage_mount
+vendor                                                 /vendor                erofs    ro                                wait,slotselect,avb,logical,first_stage_mount
+vendor                                                 /vendor                ext4     ro                                wait,slotselect,avb,logical,first_stage_mount
+odm                                                    /odm                   erofs    ro                                wait,slotselect,avb,logical,first_stage_mount
+odm                                                    /odm                   ext4     ro                                wait,slotselect,avb,logical,first_stage_mount
 
-# Super partitions
-/super             emmc        /dev/block/by-name/super                             flags=display="Super";backup=1
+# Userdata partition
+/dev/block/by-name/metadata     /metadata               ext4            noatime,nosuid,nodev,discard wait,check,formattable,first_stage_mount
+/dev/block/by-name/userdata     /data                   f2fs            noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt wait,check,formattable,quota,reservedsize=128m,latemount,resize,readahead_size_kb=512,checkpoint=fs,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption
 
-# Dynamic partitions
-/system            erofs       system                                               flags=display="System";backup=1;slotselect;formattable
-/vendor            erofs       vendor                                               flags=display="Vendor";backup=1;slotselect;formattable
-/product           erofs       product                                              flags=display="Product";backup=1;slotselect;formattable
-/system_ext        erofs       system_ext                                           flags=display="SystemExt";backup=1;slotselect;formattable
-/odm               erofs       odm                                                  flags=display="ODM";backup=1;slotselect;formattable
+# Need to have this entry in here even though the mount point itself is no longer needed.
+# The update_engine code looks for this entry in order to determine the boot device address
+# and fails if it does not find it.
+/dev/block/by-name/misc         /misc                   emmc            defaults                                        defaults
 
-# Persist partition (for TEE)
-/persist           ext4        /dev/block/by-name/persist                           flags=display="Persist";backup=1;mounttodecrypt
+# Persist partition for TEE
+/dev/block/by-name/persist      /mnt/vendor/persist     ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
 
-# Metadata (for FBE)
-/metadata          ext4        /dev/block/by-name/metadata                          flags=display="Metadata";formattable
+# Use tranfs as cache
+/dev/block/by-name/tranfs       /cache                  ext4            noatime,nosuid,nodev,discard                    wait,check,formattable
 
-# Userdata
-/data              f2fs        /dev/block/by-name/userdata                          flags=display="UserData";encryptable=footprint;backup=1;formattable;length=-16384
-
-# Cache (for recovery)
-/cache             ext4        /dev/block/by-name/cache                             flags=display="Cache";backup=1;formattable
-
-# Misc
-/misc              emmc        /dev/block/by-name/misc                              flags=display="Misc";backup=0
-
-# Storage
-/external_sd       auto        /dev/block/mmcblk1p1                                 flags=display="External SD";storage;removable;backup=0
-/usb_otg           auto        /dev/block/sda1                                      flags=display="USB OTG";storage;removable;backup=0
-
-# Ramdisk
-/ramdisk           ramdisk                                               defaults
+# Protect partitions
+/dev/block/by-name/protect1     /mnt/vendor/protect_f   ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/protect2     /mnt/vendor/protect_s   ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/nvdata       /mnt/vendor/nvdata      ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/nvcfg        /mnt/vendor/nvcfg       ext4            noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
