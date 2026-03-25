@@ -1,0 +1,40 @@
+# ueventd configuration for Infinix X6897
+# TEE device nodes
+
+# TEE devices
+/dev/tee0                0660   system   system
+/dev/teepriv0            0660   system   system
+/dev/rpmb0               0660   system   system
+/dev/mmcblk0rpmb         0660   system   system
+
+# MTK hardware
+/dev/MTK_SMI             0660   system   system
+/dev/lcm                 0660   system   system
+/dev/als_ps              0660   system   system
+/dev/accelerometer       0660   system   system
+/dev/gyroscope           0660   system   system
+/dev/m_psy               0660   system   system
+
+# Input devices
+/dev/input/event*        0660   root     input
+/dev/input/mice          0660   root     input
+/dev/input/mouse*        0660   root     input
+
+# Framebuffer
+/dev/graphics/fb0        0660   system   graphics
+/dev/graphics/fb1        0660   system   graphics
+
+# GPU
+/dev/mali0               0666   system   system
+/dev/ion                 0666   system   system
+
+# Block devices
+/dev/block/*             0660   root     system
+
+# DMA-BUF
+/dev/dma_heap/*          0666   system   system
+
+# Binder
+/dev/binder              0666   root     root
+/dev/hwbinder            0666   root     root
+/dev/vndbinder           0666   root     root

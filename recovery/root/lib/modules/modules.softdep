@@ -1,0 +1,12 @@
+# Soft dependencies for Infinix X6873 kernel modules
+# Format: module_name pre: dependency1 dependency2
+
+# TEE requires EMI first
+mcDrvModule pre: emi
+
+# RPMB requires TEE
+rpmb pre: mcDrvModule
+rpmb-mtk pre: rpmb mcDrvModule
+
+# TEE performance monitoring
+teeperf pre: mcDrvModule

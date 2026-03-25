@@ -1,0 +1,16 @@
+# Module aliases for Infinix X6873
+# Format: alias module_name
+
+# TEE
+alias tee mcDrvModule
+alias mobicore mcDrvModule
+
+# RPMB
+alias rpmb rpmb-mtk
+alias mmc_rpmb rpmb-mtk
+
+# EMI
+alias emi mtk-emi
+
+# Boot profiling
+alias bootprof bootprof

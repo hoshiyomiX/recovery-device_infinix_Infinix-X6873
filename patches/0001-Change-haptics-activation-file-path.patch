@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: X6873 TWRP <twrp@infinix.com>
+Date: Wed, 25 Mar 2025 09:00:00 +0000
+Subject: [PATCH] Change haptics activation file path for Infinix X6873
+
+Infinix X6873 uses a different path for haptics activation.
+Change from standard path to device-specific path.
+
+diff --git a/events.cpp b/events.cpp
+index 1111111..2222222 100644
+--- a/events.cpp
++++ b/events.cpp
+@@ -55,7 +55,7 @@
+ #define VIBRATOR_PATH "/sys/class/timed_output/vibrator/enable"
+ #endif
+
+-#ifndef VIBRATOR_PATH
++#ifndef VIBRATOR_CUSTOM_PATH
+ #define VIBRATOR_PATH "/sys/class/leds/vibrator/activate"
+ #endif
+

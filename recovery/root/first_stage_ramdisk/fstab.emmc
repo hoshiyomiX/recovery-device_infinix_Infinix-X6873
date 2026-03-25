@@ -1,0 +1,27 @@
+# Android fstab for Infinix X6873 (MT6897) - eMMC variant
+# For devices using eMMC storage
+
+# Boot partitions
+/boot                  emmc    /dev/block/by-name/boot                          flags=slotselect
+/vendor_boot           emmc    /dev/block/by-name/vendor_boot                   flags=slotselect
+/init_boot             emmc    /dev/block/by-name/init_boot                     flags=slotselect
+
+# Super partition
+/super                 emmc    /dev/block/by-name/super                         flags=avb=vbmeta
+
+# Dynamic partitions
+/system                ext4    system                                           flags=avb=vbmeta_system,slotselect
+/vendor                ext4    vendor                                           flags=avb=vbmeta_vendor,slotselect
+/product               ext4    product                                          flags=avb=vbmeta_product,slotselect
+/system_ext            ext4    system_ext                                       flags=avb=vbmeta_system_ext,slotselect
+
+# Persist for TEE
+/persist               ext4    /dev/block/by-name/persist                       flags=first_stage_mount
+
+# Metadata for FBE
+/metadata              ext4    /dev/block/by-name/metadata                      flags=first_stage_mount,formattable
+
+# VBMeta
+/vbmeta                emmc    /dev/block/by-name/vbmeta                         flags=slotselect
+/vbmeta_system         emmc    /dev/block/by-name/vbmeta_system                  flags=slotselect
+/vbmeta_vendor         emmc    /dev/block/by-name/vbmeta_vendor                  flags=slotselect

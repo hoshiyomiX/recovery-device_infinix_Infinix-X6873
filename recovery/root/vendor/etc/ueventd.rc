@@ -1,0 +1,17 @@
+# Vendor ueventd configuration for Infinix X6873
+
+# TEE devices
+/dev/tee0                0660   system   system
+/dev/teepriv0            0660   system   system
+
+# RPMB
+/dev/rpmb0               0660   system   system
+/dev/mmcblk0rpmb         0660   system   system
+
+# ION memory
+/dev/ion                 0666   system   system
+/dev/dma_heap/*          0666   system   system
+
+# MTK specific
+/dev/MTK_SMI             0660   system   system
+/dev/m4u                 0660   system   system

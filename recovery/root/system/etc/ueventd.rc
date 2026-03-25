@@ -1,0 +1,32 @@
+# System ueventd configuration for Infinix X6873 Recovery
+
+# Binder IPC
+/dev/binder              0666   root     root
+/dev/hwbinder            0666   root     root
+/dev/vndbinder           0666   root     root
+
+# Ashmem
+/dev/ashmem              0666   root     root
+
+# Input devices
+/dev/input/event*        0660   root     input
+/dev/input/mice          0660   root     input
+/dev/input/mouse*        0660   root     input
+
+# Framebuffer
+/dev/graphics/fb0        0660   system   graphics
+/dev/graphics/fb1        0660   system   graphics
+
+# Sound
+/dev/snd/*               0660   system   audio
+
+# DMA-BUF
+/dev/dma_heap/*          0666   system   system
+/dev/ion                 0666   system   system
+
+# USB
+/dev/bus/usb/*           0660   root     usb
+
+# TEE devices
+/dev/tee0                0660   system   system
+/dev/teepriv0            0660   system   system

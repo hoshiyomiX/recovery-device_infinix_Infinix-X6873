@@ -1,0 +1,33 @@
+# Android fstab for Infinix X6873 (MT6897)
+# Physical partitions
+
+# /system
+system                                                  /system             ext4    ro,barrier=1                                   wait,slotselect,avb=vbmeta_system
+system                                                  /system             erofs   ro                                              wait,slotselect,avb=vbmeta_system
+
+# /vendor
+vendor                                                  /vendor             ext4    ro,barrier=1                                   wait,slotselect,avb=vbmeta_vendor
+vendor                                                  /vendor             erofs   ro                                              wait,slotselect,avb=vbmeta_vendor
+
+# /product
+product                                                 /product            ext4    ro,barrier=1                                   wait,slotselect,avb=vbmeta_product
+product                                                 /product            erofs   ro                                              wait,slotselect,avb=vbmeta_product
+
+# /system_ext
+system_ext                                              /system_ext         ext4    ro,barrier=1                                   wait,slotselect,avb=vbmeta_system_ext
+system_ext                                              /system_ext         erofs   ro                                              wait,slotselect,avb=vbmeta_system_ext
+
+# /persist - Required for TEE
+/dev/block/by-name/persist                              /mnt/vendor/persist ext4    noatime,nosuid,nodev                            wait,check
+
+# /metadata - Required for FBE
+/dev/block/by-name/metadata                             /metadata           ext4    noatime,nosuid,nodev,discard                    wait,check,formattable,first_stage_mount
+
+# /data - FBE encrypted
+/dev/block/by-name/userdata                             /data               f2fs    noatime,nosuid,nodev,discard,reserve_root=32768,resgid=1065,fsync_mode=nobarrier,midparty_comp,inline_xattr,inline_dentry,flush_merge,background_gc=off,active_logs=6    wait,check,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized+wrappedkey_v0,metadata_encryption=aes-256-xts:wrappedkey_v0,keydirectory=/metadata/unencryptable/vold/metadata_encryption,quota,reservedsize=128M,sysfs_path=/sys/devices/platform/soc/11230000.mmc,fscompress
+
+# /misc
+/dev/block/by-name/misc                                 /misc               emmc    defaults                                        defaults
+
+# /cache - Recovery
+/dev/block/by-name/cache                                /cache              ext4    noatime,nosuid,nodev,barrier=1                  wait,check,formattable

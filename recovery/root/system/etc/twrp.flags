@@ -1,0 +1,26 @@
+# TWRP flags for Infinix X6873
+# Device flags file
+
+# Main partitions
+/boot                  flags=backup=1
+/vendor_boot           flags=backup=1
+/dtbo                  flags=backup=1
+/vbmeta                flags=backup=1
+/vbmeta_system         flags=backup=1
+/vbmeta_vendor         flags=backup=1
+
+# Super
+/super                 flags=display="Super";backup=1
+
+# System partitions
+/system                flags=display="System";backup=1
+/vendor                flags=display="Vendor";backup=1
+/product               flags=display="Product";backup=1
+/system_ext            flags=display="SystemExt";backup=1
+/odm                   flags=display="ODM";backup=1
+
+# Persist
+/persist               flags=display="Persist";backup=1
+
+# Data
+/data                  flags=display="Data (FBE)";backup=1;encryptable=footprint

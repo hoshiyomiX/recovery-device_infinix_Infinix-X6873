@@ -1,0 +1,7 @@
+# Module dependencies for Infinix X6873 Recovery
+bootprof.ko:
+emi.ko:
+mcDrvModule.ko:
+rpmb.ko:
+rpmb-mtk.ko: rpmb.ko
+teeperf.ko: mcDrvModule.ko

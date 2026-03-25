@@ -1,0 +1,69 @@
+# Recovery init for Infinix X6873 (MT6897)
+# Keymint 3.0 + Gatekeeper AIDL + Trustonic TEE
+
+on init
+    # Set hardware properties for crypto HALs
+    setprop ro.hardware.gatekeeper trustonic
+    setprop ro.hardware.keymaster trustonic
+    setprop ro.hardware.keystore_keymint trustonic
+
+    # Create necessary directories
+    mkdir /mnt/vendor/persist 0771 system system
+
+on post-fs
+    # Mount persist partition
+    mount ext4 /dev/block/by-name/persist /mnt/vendor/persist rw
+
+    # Create TEE directories
+    mkdir /mnt/vendor/persist/mcRegistry 0771 system system
+    mkdir /mnt/vendor/persist/keybox 0771 system system
+
+    # Set permissions for TEE devices
+    chmod 0660 /dev/tee0
+    chmod 0660 /dev/teepriv0
+    chown system system /dev/tee0
+    chown system system /dev/teepriv0
+
+    # RPMB device permissions
+    chmod 0660 /dev/rpmb0
+    chmod 0660 /dev/mmcblk0rpmb
+    chown system system /dev/rpmb0
+    chown system system /dev/mmcblk0rpmb
+
+on post-fs-data
+    # Start TEE daemon
+    start mobicore
+
+# Keymint Service
+service keymint-3-0 /vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustonic
+    class core
+    user root
+    group root system
+    disabled
+    seclabel u:r:recovery:s0
+
+# Gatekeeper Service
+service gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper-service.trustonic
+    class core
+    user root
+    group root system
+    disabled
+    seclabel u:r:recovery:s0
+
+# Trustonic TEE Service
+service tee-1-1 /vendor/bin/hw/vendor.trustonic.tee@1.1-service
+    class core
+    user root
+    group root system
+    disabled
+    seclabel u:r:recovery:s0
+
+on property:ro.crypto.state=unsupported
+    start keymint-3-0
+    start gatekeeper-1-0
+    start tee-1-1
+
+on property:ro.crypto.type=file
+    start keymint-3-0
+    start gatekeeper-1-0
+    start tee-1-1

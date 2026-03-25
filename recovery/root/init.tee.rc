@@ -1,0 +1,80 @@
+# TEE Service Configuration for Infinix X6873
+# Trustonic Kinibi TEE with Keymint 3.0
+
+# Start mcDriverDaemon (Trustonic TEE Daemon)
+service mobicore /vendor/bin/mcDriverDaemon --sfs-reformat --P1 /mnt/vendor/persist/mcRegistry \
+        -r /vendor/app/mcRegistry/06090000000000000000000000000000.drbin \
+        -r /vendor/app/mcRegistry/020f0000000000000000000000000000.drbin \
+        -r /vendor/app/mcRegistry/05120000000000000000000000000001.drbin \
+        -r /vendor/app/mcRegistry/05070000000000000000000000000000.drbin \
+        -r /vendor/app/mcRegistry/031c0000000000000000000000000000.drbin \
+        -r /vendor/app/mcRegistry/07150000000000000000000000000000.drbin \
+        -r /vendor/app/mcRegistry/07170000000000000000000000000000.drbin \
+        -r /vendor/app/mcRegistry/07210000000000000000000000000000.drbin \
+        -r /vendor/app/mcRegistry/08050000000000000000000000003419.drbin \
+        -r /vendor/app/mcRegistry/40188311faf343488db888ad39496f9a.drbin \
+        -r /vendor/app/mcRegistry/5020170115e016302017012521300000.drbin
+    user root
+    group root
+    disabled
+    seclabel u:r:recovery:s0
+
+# t-Drv naming reference:
+# 020f0000000000000000000000000000.drbin : utils
+# 031c0000000000000000000000000000.drbin : sec
+# 05070000000000000000000000000000.drbin : goodix_fp (fingerprint)
+# 05120000000000000000000000000001.drbin : sec key provisioning
+# 06090000000000000000000000000000.drbin : drm keyinstall
+# 07150000000000000000000000000000.drbin : keymaster driver
+# 07170000000000000000000000000000.drbin : gatekeeper driver
+# 07210000000000000000000000000000.drbin : secure storage
+# 08050000000000000000000000003419.drbin : widevine
+# 40188311faf343488db888ad39496f9a.drbin : widevine
+# 5020170115e016302017012521300000.drbin : drm_hdcp_common
+
+on init
+    # Create mountpoint for /mnt/vendor/persist partition
+    mkdir /mnt/vendor/persist 0771 system system
+
+on post-fs
+    chown system system /mnt/vendor/persist
+    chmod 0771 /mnt/vendor/persist
+
+    # Restore SELinux context
+    restorecon /mnt/vendor/persist
+
+    # Create mcRegistry to store failure record
+    mkdir /mnt/vendor/persist/mcRegistry 0771 system system
+    mkdir /mnt/vendor/persist/keybox 0771 system system
+
+    # Anti-crack parameters
+    mkdir /mnt/vendor/persist/startPara
+    chown system system /mnt/vendor/persist/startPara
+    chmod 0777 /mnt/vendor/persist/startPara
+
+    # Pay trigger directory
+    mkdir /mnt/vendor/persist/paytrigger
+    chown system system /mnt/vendor/persist/paytrigger
+    chmod 0777 /mnt/vendor/persist/paytrigger
+
+on post-fs-data
+    # Create key provisioning directory
+    mkdir /data/vendor/key_provisioning 0771 system system
+
+# For META/FACTORY mode (unencrypted)
+on property:ro.crypto.state=unsupported
+    write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry ++ (unencrypted)"
+    mkdir /data/vendor/mcRegistry 0775 system system
+    write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (unencrypted)"
+
+# Normal mode, FBE
+on property:ro.crypto.type=file && property:ro.crypto.state=encrypted
+    write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry ++ (FBE encrypted)"
+    mkdir /data/vendor/mcRegistry 0775 system system
+    write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (FBE encrypted)"
+
+# Normal mode, FDE
+on property:vold.decrypt=trigger_restart_framework
+    write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry ++ (FDE encrypted)"
+    mkdir /data/vendor/mcRegistry 0775 system system
+    write /proc/bootprof "MOBICORE: create /data/vendor/mcRegistry -- (FBE encrypted)"

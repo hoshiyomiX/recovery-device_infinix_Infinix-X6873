@@ -1,0 +1,12 @@
+# Kernel modules for Infinix X6873 Recovery
+# Load order matters!
+
+# Base modules
+bootprof.ko
+emi.ko
+
+# TEE modules
+mcDrvModule.ko
+rpmb.ko
+rpmb-mtk.ko
+teeperf.ko

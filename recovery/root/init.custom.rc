@@ -1,0 +1,4 @@
+on boot
+    # Mount persist partition for Trustonic TEE
+    mkdir /mnt/vendor/persist
+    mount ext4 /dev/block/by-name/persist /mnt/vendor/persist rw
