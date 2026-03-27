@@ -47,8 +47,6 @@ Works:
 
 ## Technical Notes: KeyMint V3 Challenge
 
-> **Reference Document**: [Tantangan KeyMint V3 di Recovery Kustom](https://docs.google.com/document/d/1ERo8MeMnI-VOqszsCS40wSIZfof55NPcVyDJVeJXd8g/edit?usp=drivesdk)
-
 ### Current State of FBE Decryption with KeyMint 3.0
 
 Unfortunately, the bitter reality in the custom recovery world today is that **no source tree (TWRP or OrangeFox) has universally and stably succeeded in upstreaming FBE decryption with KeyMint 3.0 (AIDL)**, especially for the MediaTek + Trustonic TEE combination.
