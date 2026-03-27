@@ -121,8 +121,8 @@ BOARD_VNDK_VERSION := current
 
 # Crypto - Keymint 3.0 (AIDL)
 # DISABLED: KeyMint V3 not supported from source for MediaTek + Trustonic TEE
-# TW_INCLUDE_CRYPTO          := true
-# TW_INCLUDE_CRYPTO_FBE      := true
+TW_INCLUDE_CRYPTO          := false
+TW_INCLUDE_CRYPTO_FBE      := false
 # TW_USE_FSCRYPT_POLICY      := 2
 # TW_FORCE_KEYMASTER_VER     := true
 # TW_INCLUDE_LIBFI2SCRYPT    := true
