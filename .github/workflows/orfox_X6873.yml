@@ -1,0 +1,797 @@
+# OrangeFox Recovery Build Workflow - OPTIMIZED
+# Device: Infinix GT 30 Pro (X6873)
+# Compatible: OrangeFox R11.3 (fox_12.1 manifest)
+# Maintainer: hoshiyomiX
+# Optimized for faster builds (~30-40% time reduction)
+
+name: OrangeFox X6873
+
+on:
+  workflow_dispatch:
+    inputs:
+      SYNC_URL:
+        description: 'OrangeFox Sync URL'
+        required: true
+        default: 'https://gitlab.com/OrangeFox/sync.git'
+        type: string
+      MANIFEST_BRANCH:
+        description: 'Manifest Branch'
+        required: true
+        default: '12.1'
+        type: choice
+        options:
+          - '12.1'
+          - '14.1'
+      DEVICE_TREE_URL:
+        description: 'Device Tree URL'
+        required: true
+        default: 'https://github.com/hoshiyomiX/recovery-device_infinix_Infinix-X6873.git'
+        type: string
+      DEVICE_TREE_BRANCH:
+        description: 'Device Tree Branch'
+        required: true
+        default: 'revision'
+        type: string
+      DEVICE_PATH:
+        description: 'Device Path'
+        required: true
+        default: 'device/infinix/Infinix-X6873'
+        type: string
+      COMMON_TREE_URL:
+        description: 'Common Tree URL (optional)'
+        required: false
+        type: string
+      COMMON_TREE_BRANCH:
+        description: 'Common Tree Branch'
+        required: false
+        type: string
+      COMMON_PATH:
+        description: 'Common Path'
+        required: false
+        type: string
+      DEVICE_NAME:
+        description: 'Device Codename (must match PRODUCT_DEVICE in device.mk)'
+        required: true
+        default: 'Infinix-X6873'
+        type: string
+      MAKEFILE_NAME:
+        description: 'Makefile Name (for lunch command)'
+        required: true
+        default: 'twrp_X6873'
+        type: string
+      BUILD_TARGET:
+        description: 'Build Target'
+        required: true
+        default: 'vendorbootimage'
+        type: choice
+        options:
+          - 'vendorbootimage'
+          - 'recoveryimage'
+          - 'bootimage'
+      BUILD_TYPE:
+        description: 'Build Type'
+        required: true
+        default: 'eng'
+        type: choice
+        options:
+          - 'eng'
+          - 'user'
+      CLEAN_BUILD:
+        description: 'Clean Build (no ccache)'
+        required: false
+        default: false
+        type: boolean
+
+# Environment Variables
+env:
+  FOX_DEVICE_NAME: Infinix-X6873
+  FOX_DEVICE_CODE: X6873
+  FOX_DEVICE_MODEL: "Infinix GT 30 Pro"
+  FOX_PLATFORM: mt6897
+  FOX_ARCH: arm64
+  FOX_BRIGHTNESS_PATH: /sys/class/leds/lcd-backlight/brightness
+  FOX_MAX_BRIGHTNESS: 255
+
+jobs:
+  # ============================================================
+  # PREPARE JOB - Validate inputs and prepare environment
+  # ============================================================
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.validate.outputs.should_build }}
+    steps:
+      - name: Validate Build
+        id: validate
+        run: |
+          if [ "${{ github.event.repository.owner.id }}" != "${{ github.event.sender.id }}" ]; then
+            echo "❌ Only repository owner can trigger builds"
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "✅ Build authorized"
+          echo "should_build=true" >> $GITHUB_OUTPUT
+
+  # ============================================================
+  # BUILD JOB - Main build process (OPTIMIZED)
+  # ============================================================
+  build:
+    needs: prepare
+    if: needs.prepare.outputs.should_build == 'true'
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      # --------------------------------------------------------
+      # Step 1: Checkout (shallow)
+      # --------------------------------------------------------
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # --------------------------------------------------------
+      # Step 2: AGGRESSIVE Cleanup (comprehensive like slimhub_actions but faster)
+      # Target: Free ~45-50GB for OrangeFox/TWRP builds
+      # Time: ~30-60 seconds vs slimhub_actions ~6 minutes
+      # --------------------------------------------------------
+      - name: Free Disk Space
+        run: |
+          echo "=== Disk Space Before Cleanup ==="
+          df -h /
+          echo ""
+
+          # Remove large directories (fastest method - direct rm)
+          echo "Removing large tool directories..."
+
+          # .NET SDK (~2-3GB)
+          sudo rm -rf /usr/share/dotnet 2>/dev/null || true
+
+          # Android SDK (~10-15GB) - CRITICAL for recovery builds
+          sudo rm -rf /usr/local/lib/android 2>/dev/null || true
+
+          # Haskell/GHC (~3-5GB)
+          sudo rm -rf /opt/ghc 2>/dev/null || true
+
+          # CodeQL (~5-8GB)
+          sudo rm -rf /opt/hostedtoolcache/CodeQL 2>/dev/null || true
+
+          # Remove ALL hostedtoolcache except what we need
+          sudo rm -rf /opt/hostedtoolcache/go 2>/dev/null || true
+          sudo rm -rf /opt/hostedtoolcache/node 2>/dev/null || true
+          sudo rm -rf /opt/hostedtoolcache/Python 2>/dev/null || true
+          sudo rm -rf /opt/hostedtoolcache/Ruby 2>/dev/null || true
+          sudo rm -rf /opt/hostedtoolcache/pipx 2>/dev/null || true
+
+          # Remove browsers (not needed for CLI builds)
+          sudo rm -rf /usr/local/share/chromium 2>/dev/null || true
+          sudo rm -rf /usr/local/share/google-chrome 2>/dev/null || true
+          sudo rm -rf /usr/local/share/microsoft-edge 2>/dev/null || true
+          sudo rm -rf /usr/local/share/firefox 2>/dev/null || true
+
+          # Remove Azure CLI (~500MB)
+          sudo rm -rf /opt/az 2>/dev/null || true
+          sudo rm -rf /usr/lib/azure 2>/dev/null || true
+
+          # Remove Docker images (if any)
+          echo "Removing Docker images..."
+          sudo docker system prune -af 2>/dev/null || true
+          sudo rm -rf /var/lib/docker 2>/dev/null || true
+
+          # Clean journal logs
+          sudo journalctl --vacuum-time=1s 2>/dev/null || true
+
+          # Remove snap packages (if any)
+          sudo rm -rf /snap 2>/dev/null || true
+
+          # Remove unused apt packages that take significant space
+          # NOTE: Do this BEFORE removing doc/man/info to avoid dpkg errors
+          echo "Removing unused packages..."
+          sudo apt-get remove -y --purge \
+            azure-cli \
+            google-chrome-stable \
+            microsoft-edge-stable \
+            firefox \
+            chromium-browser \
+            powershell \
+            dotnet-sdk-* \
+            2>/dev/null || true
+
+          # Final apt clean
+          sudo apt-get autoremove -y --purge 2>/dev/null || true
+          sudo apt-get clean -y
+
+          # Remove large documentation and man pages (AFTER apt operations)
+          sudo rm -rf /usr/share/doc /usr/share/man 2>/dev/null || true
+          # Don't remove /usr/share/info - causes dpkg errors
+
+          # Clean apt cache (but keep package lists for install)
+          sudo rm -rf /var/cache/apt/archives/*
+
+          echo ""
+          echo "=== Disk Space After Cleanup ==="
+          df -h /
+
+          # Verify we have enough space for build
+          AVAILABLE_GB=$(df -BG / | awk 'NR==2 {print $4}' | tr -d 'G')
+          echo ""
+          echo "Available space: ${AVAILABLE_GB}GB"
+
+          if [ "$AVAILABLE_GB" -lt 100 ]; then
+            echo "⚠️ WARNING: Less than 100GB available. Build may fail!"
+            echo "Consider running with smaller parallel jobs."
+          else
+            echo "✅ Sufficient disk space for OrangeFox/TWRP build"
+          fi
+
+      # --------------------------------------------------------
+      # Step 3: Initialize workspace
+      # --------------------------------------------------------
+      - name: Initialize workspace
+        id: pwd
+        run: |
+          mkdir -p workspace
+          echo "workspace-folder=$(pwd)/workspace" >> $GITHUB_OUTPUT
+
+      # --------------------------------------------------------
+      # Step 4: Setup ccache with symlink wrapper (RELIABLE for Android)
+      # --------------------------------------------------------
+      - name: Setup ccache
+        if: github.event.inputs.CLEAN_BUILD != 'true'
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/.ccache
+          key: ofox-ccache-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_number }}
+          restore-keys: |
+            ofox-ccache-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ github.event.inputs.DEVICE_NAME }}-
+            ofox-ccache-${{ github.event.inputs.MANIFEST_BRANCH }}-
+
+      - name: Configure ccache
+        run: |
+          # Create ccache directory
+          sudo mkdir -p /home/runner/.ccache
+          sudo chown -R runner:runner /home/runner/.ccache
+          
+          # Configure ccache
+          ccache --set-config=cache_dir=/home/runner/.ccache
+          ccache --set-config=max_size=15G
+          ccache --set-config=compression=true
+          ccache --set-config=compression_level=6
+          ccache --set-config=sloppiness=time_macros,include_file_mtime,include_file_ctime,file_macro,clang_index_store,pch_defines
+          
+          # CRITICAL: Create symlinks so ccache intercepts compiler calls
+          # This is the most reliable way to make Android build use ccache
+          sudo mkdir -p /usr/local/ccache-bin
+          sudo ln -sf $(which ccache) /usr/local/ccache-bin/gcc
+          sudo ln -sf $(which ccache) /usr/local/ccache-bin/g++
+          sudo ln -sf $(which ccache) /usr/local/ccache-bin/clang
+          sudo ln -sf $(which ccache) /usr/local/ccache-bin/clang++
+          sudo ln -sf $(which ccache) /usr/local/ccache-bin/aarch64-linux-android-gcc
+          sudo ln -sf $(which ccache) /usr/local/ccache-bin/aarch64-linux-android-g++
+          sudo ln -sf $(which ccache) /usr/local/ccache-bin/aarch64-linux-android-clang
+          sudo ln -sf $(which ccache) /usr/local/ccache-bin/aarch64-linux-android-clang++
+          
+          echo "/usr/local/ccache-bin" >> $GITHUB_PATH
+          
+          # Verify configuration
+          echo "=== Ccache Configuration ==="
+          ccache -p | grep -E "cache_dir|max_size|compression|sloppiness"
+          echo ""
+          echo "=== Ccache symlinks ==="
+          ls -la /usr/local/ccache-bin/
+          ccache -z
+          
+          # Show cache size before build
+          echo "=== Ccache directory before build ==="
+          du -sh /home/runner/.ccache/ || echo "Empty cache"
+
+      # --------------------------------------------------------
+      # Step 5: Cache OrangeFox manifest sources (saves ~4-5 min sync time)
+      # --------------------------------------------------------
+      - name: Cache OrangeFox sources
+        if: github.event.inputs.CLEAN_BUILD != 'true'
+        uses: actions/cache@v4
+        id: cache-manifest
+        with:
+          path: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+          key: ofox-manifest-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ hashFiles('.github/workflows/orfox_X6873.yml') }}
+          restore-keys: |
+            ofox-manifest-${{ github.event.inputs.MANIFEST_BRANCH }}-
+
+      # --------------------------------------------------------
+      # Step 6: Setup Build Environment (OPTIMIZED)
+      # --------------------------------------------------------
+      - name: Prepare the build environment
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+        run: |
+          # IMPORTANT: Run apt update first to refresh package lists
+          echo "=== Updating package lists ==="
+          sudo apt-get update -qq
+
+          # Install only essential packages (no apt upgrade - saves time)
+          echo "=== Installing build dependencies ==="
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -yq --no-install-recommends \
+              git python3 tar aria2 \
+              gperf gcc-multilib g++-multilib \
+              libc6-dev lib32ncurses-dev libx11-dev lib32z-dev libgl1-mesa-dev \
+              libxml2-utils xsltproc bc ccache lib32readline-dev lib32z1-dev \
+              liblz4-tool libncurses-dev libncurses5 libssl-dev \
+              libxml2 lzop pngcrush squashfs-tools imagemagick \
+              libbz2-dev lzma ncurses-dev texinfo yacc zip unzip \
+              flex bison build-essential git-lfs python3-pip \
+              libtinfo5 libtinfo-dev wget curl rsync \
+              zipalign openjdk-11-jdk-headless
+
+          # Clone OrangeFox setup scripts (shallow clone)
+          echo "=== Cloning OrangeFox scripts ==="
+          git clone --depth=1 https://gitlab.com/OrangeFox/misc/scripts
+          cd scripts
+          sudo bash setup/android_build_env.sh
+          sed -i 's/cd -/cd ../g' setup/install_android_sdk.sh
+          sudo bash setup/install_android_sdk.sh
+
+      # --------------------------------------------------------
+      # Step 7: Configure Git
+      # --------------------------------------------------------
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global color.ui false
+          git config --global checkout.defaultRemote origin
+
+      # --------------------------------------------------------
+      # Step 8: Increase Swap Space
+      # --------------------------------------------------------
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 12
+
+      # --------------------------------------------------------
+      # Step 9: Sync OrangeFox sources (skip if cached)
+      # --------------------------------------------------------
+      - name: Sync OrangeFox sources and minimal manifest
+        if: steps.cache-manifest.outputs.cache-hit != 'true'
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+        run: |
+          echo "=== Cloning OrangeFox Sync Script ==="
+          git clone --depth=1 ${{ github.event.inputs.SYNC_URL }} sync
+          cd sync
+
+          echo "=== Running OrangeFox Sync ==="
+          echo "Branch: ${{ github.event.inputs.MANIFEST_BRANCH }}"
+          echo "Target Path: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}"
+
+          ./orangefox_sync.sh \
+            --branch ${{ github.event.inputs.MANIFEST_BRANCH }} \
+            --path ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+
+      - name: Verify cached manifest
+        if: steps.cache-manifest.outputs.cache-hit == 'true'
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+        run: |
+          echo "✅ Using cached OrangeFox manifest!"
+          echo "=== Manifest contents ==="
+          ls -la
+          du -sh .
+
+      # --------------------------------------------------------
+      # Step 9: Clone device tree (shallow clone)
+      # --------------------------------------------------------
+      - name: Clone device tree
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+        run: |
+          DEVICE_PATH="${{ github.event.inputs.DEVICE_PATH }}"
+
+          echo "=== Cloning Device Tree (shallow) ==="
+          echo "URL: ${{ github.event.inputs.DEVICE_TREE_URL }}"
+          echo "Branch: ${{ github.event.inputs.DEVICE_TREE_BRANCH }}"
+          echo "Path: $DEVICE_PATH"
+
+          git clone --depth=1 \
+            ${{ github.event.inputs.DEVICE_TREE_URL }} \
+            -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} \
+            ./$DEVICE_PATH
+
+          echo "=== Device Tree Contents ==="
+          ls -la ./$DEVICE_PATH/
+
+      # --------------------------------------------------------
+      # Step 10: Clone common tree (if specified)
+      # --------------------------------------------------------
+      - name: Clone common tree
+        if: |
+          github.event.inputs.COMMON_TREE_URL != '' &&
+          github.event.inputs.COMMON_PATH != ''
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+        run: |
+          COMMON_PATH="${{ github.event.inputs.COMMON_PATH }}"
+
+          echo "=== Cloning Common Tree (shallow) ==="
+          git clone --depth=1 \
+            ${{ github.event.inputs.COMMON_TREE_URL }} \
+            -b ${{ github.event.inputs.COMMON_TREE_BRANCH }} \
+            ./$COMMON_PATH
+
+          echo "=== Common Tree Contents ==="
+          ls -la ./$COMMON_PATH/ || true
+
+      # --------------------------------------------------------
+      # Step 11: Verify Device Tree
+      # --------------------------------------------------------
+      - name: Verify Device Tree
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+        run: |
+          DEVICE_PATH="${{ github.event.inputs.DEVICE_PATH }}"
+
+          echo "=== Verifying Device Tree Configuration ==="
+
+          essential_files=(
+            "BoardConfig.mk"
+            "device.mk"
+            "AndroidProducts.mk"
+            "vendorsetup.sh"
+          )
+
+          for file in "${essential_files[@]}"; do
+            if [ -f "$DEVICE_PATH/$file" ]; then
+              echo "✅ $file found"
+            else
+              echo "⚠️ $file not found"
+            fi
+          done
+
+          echo ""
+          echo "=== Crypto Configuration ==="
+          grep -E "TW_INCLUDE_CRYPTO|TW_INCLUDE_KEYMINT|TW_USE_FSCRYPT_POLICY" \
+            "$DEVICE_PATH/BoardConfig.mk" || echo "No crypto flags found"
+
+          echo ""
+          echo "=== Product Definition ==="
+          cat "$DEVICE_PATH/AndroidProducts.mk"
+
+      # --------------------------------------------------------
+      # Step 12: Build OrangeFox Recovery (FIXED ccache integration)
+      # --------------------------------------------------------
+      - name: Building recovery
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+        timeout-minutes: 180
+        run: |
+          # =====================================================
+          # CCACHE CONFIGURATION FOR ANDROID BUILD (CRITICAL!)
+          # =====================================================
+          # Use ABSOLUTE path for ccache (must match actions/cache path)
+          export CCACHE_DIR=/home/runner/.ccache
+          
+          # Android build system needs these specific variables
+          export ALLOW_MISSING_DEPENDENCIES=true
+          export USE_CCACHE=1
+          export WITH_CCACHE=true
+          export CCACHE_EXEC=$(which ccache)
+          export CCACHE_CPP2=yes
+          export CCACHE_SLOPPINESS=time_macros,include_file_mtime,include_file_ctime,file_macro,clang_index_store
+
+          # Locale settings
+          export LC_ALL=C
+
+          # Show ccache config before build
+          echo "=== Ccache Configuration ==="
+          echo "CCACHE_DIR: $CCACHE_DIR"
+          echo "CCACHE_EXEC: $CCACHE_EXEC"
+          ccache -p | grep -E "cache_dir|max_size|compression|sloppiness" || true
+          echo ""
+          echo "=== Ccache Directory Before Build ==="
+          du -sh $CCACHE_DIR || true
+          ls -la $CCACHE_DIR/ || true
+
+          # OrangeFox specific variables
+          export FOX_BURNER_MAINTAINERS="${{ github.actor }}"
+          export FOX_RECOVERY_DEVICE_CODENAME="${{ env.FOX_DEVICE_CODE }}"
+          export FOX_RECOVERY_DEVICE_MODEL="${{ env.FOX_DEVICE_MODEL }}"
+          export FOX_RECOVERY_PLATFORM="${{ env.FOX_PLATFORM }}"
+
+          BUILD_TARGET="${{ github.event.inputs.BUILD_TARGET }}"
+          BUILD_TYPE="${{ github.event.inputs.BUILD_TYPE }}"
+          DEVICE_NAME="${{ github.event.inputs.DEVICE_NAME }}"
+          DEVICE_CODE="${{ env.FOX_DEVICE_CODE }}"
+          MAKEFILE_NAME="${{ github.event.inputs.MAKEFILE_NAME }}"
+
+          echo "=========================================="
+          echo "  OrangeFox Recovery Build Configuration"
+          echo "=========================================="
+          echo "Device: $DEVICE_NAME"
+          echo "Device Code: $DEVICE_CODE"
+          echo "Model: ${{ env.FOX_DEVICE_MODEL }}"
+          echo "Platform: ${{ env.FOX_PLATFORM }}"
+          echo "Makefile: $MAKEFILE_NAME"
+          echo "Build Target: $BUILD_TARGET"
+          echo "Build Type: $BUILD_TYPE"
+          echo "Manifest: ${{ github.event.inputs.MANIFEST_BRANCH }}"
+          echo "=========================================="
+
+          # Reset ccache stats before build
+          ccache -z
+
+          # Source build environment
+          set +e
+          source build/envsetup.sh
+          set -e
+
+          # Clean build if requested
+          if [ "${{ github.event.inputs.CLEAN_BUILD }}" = "true" ]; then
+            echo ""
+            echo "=== Performing Clean Build ==="
+            make clean
+            ccache -C  # Clear ccache completely for clean build
+            ccache -z
+          fi
+
+          # Lunch the device
+          echo ""
+          echo "=== Lunching Device ==="
+          lunch $MAKEFILE_NAME-$BUILD_TYPE
+
+          # Display build environment
+          echo ""
+          echo "=== Build Environment ==="
+          echo "TARGET_PRODUCT: $TARGET_PRODUCT"
+          echo "TARGET_DEVICE: $TARGET_DEVICE"
+          echo "TARGET_ARCH: $TARGET_ARCH"
+          echo "TARGET_BUILD_TYPE: $TARGET_BUILD_TYPE"
+
+          # Verify ccache is detected by build system
+          echo ""
+          echo "=== Verifying Ccache Integration ==="
+          
+          # Force ccache wrappers for Android build
+          # Method 1: Set environment variables that Android build system reads
+          export CCACHE_EXEC=$(which ccache)
+          export ANDROID_CCACHE_DIR=$CCACHE_DIR
+          
+          # Method 2: Check if build system supports wrappers
+          CC_WRAP=$(get_build_var CC_WRAPPER 2>/dev/null || echo "")
+          CXX_WRAP=$(get_build_var CXX_WRAPPER 2>/dev/null || echo "")
+          echo "CC_WRAPPER from build system: $CC_WRAP"
+          echo "CXX_WRAPPER from build system: $CXX_WRAP"
+          
+          # Method 3: Set wrappers explicitly if not set
+          if [ -z "$CC_WRAP" ]; then
+            echo "Setting CC_WRAPPER=ccache explicitly"
+            export CC_WRAPPER="ccache"
+          fi
+          if [ -z "$CXX_WRAP" ]; then
+            echo "Setting CXX_WRAPPER=ccache explicitly"  
+            export CXX_WRAPPER="ccache"
+          fi
+          
+          # Verify ccache is working
+          echo ""
+          echo "=== Ccache Status Before Build ==="
+          ccache -s | head -20
+
+          # Start build with optimized parallel jobs
+          echo ""
+          echo "=== Starting Build ==="
+          # Use all available cores for maximum parallelism
+          JOB_COUNT=$(nproc)
+          [ $JOB_COUNT -lt 2 ] && JOB_COUNT=2
+
+          echo "Using $JOB_COUNT parallel jobs"
+
+          # Use mka which properly respects ANDROID build system ccache settings
+          mka adbd $BUILD_TARGET -j$JOB_COUNT || {
+            echo "Build failed, retrying with single thread..."
+            mka adbd $BUILD_TARGET -j1
+          }
+
+          # Show ccache stats after build
+          echo ""
+          echo "============================================"
+          echo "  CCACHE STATISTICS (IMPORTANT - VERIFY)"
+          echo "============================================"
+          ccache -s
+          echo ""
+          echo "Cache directory size:"
+          du -sh $CCACHE_DIR || true
+          echo "============================================"
+
+      # --------------------------------------------------------
+      # Step 13: Check output directory
+      # --------------------------------------------------------
+      - name: Check the output directory before uploading
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+        run: |
+          echo "=== Output Directory Contents ==="
+          ls -al out/target/product/ || true
+          echo
+          ls -al out/target/product/${{ github.event.inputs.DEVICE_NAME }}/ || true
+
+      # --------------------------------------------------------
+      # Step 14: Prepare Artifacts
+      # --------------------------------------------------------
+      - name: Prepare Build Artifacts
+        id: artifacts
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+        run: |
+          DEVICE_NAME="${{ github.event.inputs.DEVICE_NAME }}"
+          BUILD_TARGET="${{ github.event.inputs.BUILD_TARGET }}"
+          OUT_DIR="out/target/product/$DEVICE_NAME"
+
+          echo "=== Searching for Build Artifacts ==="
+          echo "Output directory: $OUT_DIR"
+
+          if [ ! -d "$OUT_DIR" ]; then
+            echo "⚠️ Primary output directory not found, trying alternatives..."
+            for alt_name in "Infinix-X6873" "X6873" "$DEVICE_NAME"; do
+              ALT_DIR="out/target/product/$alt_name"
+              if [ -d "$ALT_DIR" ]; then
+                OUT_DIR="$ALT_DIR"
+                echo "✅ Found output directory: $OUT_DIR"
+                break
+              fi
+            done
+          fi
+
+          if [ ! -d "$OUT_DIR" ]; then
+            echo "❌ Output directory not found!"
+            echo "=== Available product directories ==="
+            ls -la out/target/product/ || true
+            exit 1
+          fi
+
+          echo ""
+          echo "=== Output Directory Contents ==="
+          ls -la "$OUT_DIR/" || true
+
+          # Priority: OrangeFox branded image > target-specific image > any .img
+          IMAGE_PATH=""
+
+          # 1. First priority: OrangeFox branded image (e.g., OrangeFox-R11.3-Unofficial-X6873.img)
+          IMAGE_PATH=$(find "$OUT_DIR" -maxdepth 1 -name "OrangeFox-*.img" -type f | head -n1)
+          echo "Checking OrangeFox branded image: $IMAGE_PATH"
+
+          # 2. Second priority: target-specific image based on BUILD_TARGET
+          if [ -z "$IMAGE_PATH" ] || [ ! -f "$IMAGE_PATH" ]; then
+            case "$BUILD_TARGET" in
+              vendorbootimage)
+                if [ -f "$OUT_DIR/vendor_boot.img" ]; then
+                  IMAGE_PATH="$OUT_DIR/vendor_boot.img"
+                fi
+                ;;
+              recoveryimage)
+                if [ -f "$OUT_DIR/recovery.img" ]; then
+                  IMAGE_PATH="$OUT_DIR/recovery.img"
+                fi
+                ;;
+              bootimage)
+                if [ -f "$OUT_DIR/boot.img" ]; then
+                  IMAGE_PATH="$OUT_DIR/boot.img"
+                fi
+                ;;
+            esac
+            echo "Checking target-specific image: $IMAGE_PATH"
+          fi
+
+          # 3. Last resort: any .img file
+          if [ -z "$IMAGE_PATH" ] || [ ! -f "$IMAGE_PATH" ]; then
+            IMAGE_PATH=$(find "$OUT_DIR" -maxdepth 1 -name "*.img" -type f | head -n1)
+            echo "Checking any .img file: $IMAGE_PATH"
+          fi
+
+          if [ -z "$IMAGE_PATH" ] || [ ! -f "$IMAGE_PATH" ]; then
+            echo "❌ No image file found!"
+            exit 1
+          fi
+
+          IMAGE_NAME=$(basename "$IMAGE_PATH")
+          IMAGE_SIZE=$(stat -c%s "$IMAGE_PATH")
+          IMAGE_SIZE_MB=$((IMAGE_SIZE / 1024 / 1024))
+          # Release title = output filename (without .img extension)
+          RELEASE_TITLE="${IMAGE_NAME%.*}"
+
+          echo ""
+          echo "=== Image Found ==="
+          echo "File: $IMAGE_NAME"
+          echo "Size: ${IMAGE_SIZE_MB}MB"
+          echo "Release Title: $RELEASE_TITLE"
+
+          SHA256=$(sha256sum "$IMAGE_PATH" | awk '{print $1}')
+          MD5=$(md5sum "$IMAGE_PATH" | awk '{print $1}')
+
+          BUILD_DATE=$(date +"%Y%m%d")
+          BUILD_TIME=$(date +"%H%M%S")
+          BUILD_VERSION="R11.3"
+
+          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "image_path=$IMAGE_PATH" >> $GITHUB_OUTPUT
+          echo "image_size=${IMAGE_SIZE_MB}MB" >> $GITHUB_OUTPUT
+          echo "image_size_bytes=$IMAGE_SIZE" >> $GITHUB_OUTPUT
+          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          echo "md5=$MD5" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+          echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
+          echo "build_version=$BUILD_VERSION" >> $GITHUB_OUTPUT
+          echo "release_title=$RELEASE_TITLE" >> $GITHUB_OUTPUT
+
+      # --------------------------------------------------------
+      # Step 16: Upload to GitHub Release
+      # --------------------------------------------------------
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ steps.pwd.outputs.workspace-folder }}/fox_${{ github.event.inputs.MANIFEST_BRANCH }}/${{ steps.artifacts.outputs.image_path }}
+          name: ${{ steps.artifacts.outputs.release_title }}
+          tag_name: v${{ steps.artifacts.outputs.build_date }}-${{ github.run_number }}
+          body: |
+            > [!WARNING]
+            > **DO IT AT YOUR OWN RISK**
+            > This is a **testing build** and may contain bugs or instability. The maintainer is not responsible for any damage to your device, data loss, or any other issues that may occur.
+
+            > [!IMPORTANT]
+            > **TESTING PHASE** - This build is intended for testing purposes only. Do not try if you not acknowledge the risk!
+
+            ### 🤝 Need your help!
+
+            > [!NOTE]
+            > **Help improve this build!** Please take logs to speed up fixes & stability improvements.
+
+            **How to capture logs:**
+            1. In OrangeFox: **Menu → Copy Log to SD**
+            2. Or via ADB: `adb pull /tmp/recovery.log`
+
+            **Submit via:** [GitHub Issues](https://github.com/hoshiyomiX/recovery-device_infinix_Infinix-X6873/issues) or [Telegram](https://t.me/hoshiyomi_id)
+
+            ---
+
+            ### 📱 Device Information
+
+            | Property | Value |
+            | :-------- | :---- |
+            | **Device** | Infinix GT 30 Pro |
+            | **Codename** | X6873 |
+            | **Platform** | MediaTek MT6897 |
+            | **Android Version** | 15 (A15) |
+            | **OrangeFox Version** | ${{ steps.artifacts.outputs.build_version }} |
+            | **Build Date** | ${{ steps.artifacts.outputs.build_date }} |
+            | **Build Type** | ${{ github.event.inputs.BUILD_TARGET }} |
+
+            ---
+
+            ### 📲 Flashing Instructions
+
+            ```bash
+            fastboot flash vendor_boot vendor_boot.img
+            fastboot reboot recovery
+            ```
+
+            ---
+
+            ### 🔐 Verify Checksum
+
+            | Hash | Value |
+            | :--- | :---- |
+            | **SHA256** | `${{ steps.artifacts.outputs.sha256 }}` |
+            | **MD5** | `${{ steps.artifacts.outputs.md5 }}` |
+
+            **Windows (PowerShell):**
+            ```powershell
+            # SHA256
+            Get-FileHash vendor_boot.img -Algorithm SHA256
+
+            # MD5
+            Get-FileHash vendor_boot.img -Algorithm MD5
+            ```
+
+            **Linux/macOS:**
+            ```bash
+            # SHA256
+            sha256sum vendor_boot.img
+
+            # MD5
+            md5sum vendor_boot.img
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

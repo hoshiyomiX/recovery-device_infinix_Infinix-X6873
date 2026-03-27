@@ -1,0 +1,270 @@
+name: TWRP X6873 (Optimized)
+
+on:
+  workflow_dispatch:
+    inputs:
+      MANIFEST_URL:
+        description: 'MANIFEST_URL'
+        required: true
+        default: 'https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp'
+      MANIFEST_BRANCH:
+        description: 'MANIFEST_BRANCH'
+        required: true
+        default: 'twrp-12.1'
+      DEVICE_TREE_URL:
+        description: 'DEVICE_TREE_URL'
+        required: true
+        default: 'https://github.com/hoshiyomiX/recovery-device_infinix_Infinix-X6873.git'
+      DEVICE_TREE_BRANCH:
+        description: 'DEVICE_TREE_BRANCH'
+        required: true
+        default: 'twrp-12.1'
+      DEVICE_PATH:
+        description: 'DEVICE_PATH'
+        required: true
+        default: 'device/infinix/Infinix-X6873'
+      COMMON_TREE_URL:
+        description: 'COMMON_TREE_URL'
+        required: false
+      COMMON_TREE_BRANCH:
+        description: 'COMMON_TREE_BRANCH'
+        required: false
+      COMMON_PATH:
+        description: 'COMMON_PATH'
+        required: false
+      DEVICE_NAME:
+        description: 'DEVICE_NAME (Output folder name)'
+        required: true
+        default: 'Infinix-X6873'
+      MAKEFILE_NAME:
+        description: 'MAKEFILE_NAME'
+        required: true
+        default: 'twrp_X6873'
+      BUILD_TARGET:
+        description: 'BUILD_TARGET (boot, vendorboot, recovery)'
+        required: true
+        default: 'vendorboot'
+
+jobs:
+  build:
+    if: github.event.repository.owner.id == github.event.sender.id
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+    - name: Check Out
+      uses: actions/checkout@v4
+
+    - name: Cleanup
+      uses: rokibhasansagar/slimhub_actions@main
+
+    - name: Prepare the environment
+      run: |
+        # Removed 'upgrade' to save ~5-10 minutes
+        sudo apt install -y --no-install-recommends \
+            gperf gcc-multilib gcc-10-multilib g++-multilib g++-10-multilib \
+            libc6-dev lib32ncurses-dev libx11-dev lib32z-dev libgl1-mesa-dev libxml2-utils \
+            xsltproc bc ccache lib32readline-dev lib32z1-dev liblz4-tool libncurses-dev \
+            libssl-dev libxml2 lzop pngcrush schedtool squashfs-tools \
+            imagemagick libbz2-dev lzma libstdc++-10-dev python3 git-lfs zip unzip
+
+    - name: Install OpenJDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '11'
+
+    - name: Setup SSH Keys
+      if: ${{ startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com') || 
+          startsWith(github.event.inputs.DEVICE_TREE_URL, 'git@github.com') ||
+          startsWith(github.event.inputs.COMMON_TREE_URL, 'git@github.com') }}
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+          ssh-private-key: |
+            ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Install repo
+      run: |
+        mkdir -p ~/bin
+        curl -sS https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+        chmod a+x ~/bin/repo
+        sudo ln -sf ~/bin/repo /usr/bin/repo
+
+    - name: Setup ccache
+      run: |
+        mkdir -p ~/.ccache
+        echo "base_dir = ${{ github.workspace }}/workspace" > ~/.ccache/ccache.conf
+        echo "compression = true" >> ~/.ccache/ccache.conf
+        echo "compression_level = 6" >> ~/.ccache/ccache.conf
+        echo "max_size = 2G" >> ~/.ccache/ccache.conf
+        ccache -M 2G
+        ccache -z
+
+    - name: Restore ccache
+      uses: actions/cache@v4
+      with:
+        path: ~/.ccache
+        key: ccache-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
+        restore-keys: |
+          ccache-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ github.event.inputs.DEVICE_NAME }}-
+          ccache-${{ github.event.inputs.MANIFEST_BRANCH }}-
+
+    - name: Initialize repo
+      run: |
+        mkdir workspace
+        cd workspace
+        echo "workspace-folder=$(pwd)" >> $GITHUB_OUTPUT
+        git config --global user.name "excaliburXD"
+        git config --global user.email "eexcalibur32@gmail.com"
+        git config --global color.ui false
+        # Added --no-repo-verify to skip verification checks (faster)
+        repo init --depth=1 --no-repo-verify -u ${{ github.event.inputs.MANIFEST_URL }} -b ${{ github.event.inputs.MANIFEST_BRANCH }}
+      id: pwd
+
+    - name: Repo Sync
+      run: |
+        # Optimized flags: -c (current branch), --no-tags, --no-clone-bundle
+        # -j4 is often more stable than max cores for network I/O
+        repo sync -c --no-tags --no-clone-bundle -j4 --force-sync --fail-fast
+      working-directory: workspace
+      timeout-minutes: 60
+
+    - name: Clone device tree
+      run: |
+        # Added --depth=1 for speed
+        git clone --depth=1 ${{ github.event.inputs.DEVICE_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+
+    - name: Clone common tree
+      if: |
+        github.event.inputs.COMMON_TREE_URL != null
+        && github.event.inputs.COMMON_PATH != null
+        && github.event.inputs.COMMON_TREE_URL != ''
+      run: |
+        # Added --depth=1 and dedicated branch input
+        git clone --depth=1 ${{ github.event.inputs.COMMON_TREE_URL }} -b ${{ github.event.inputs.COMMON_TREE_BRANCH }} ./${{ github.event.inputs.COMMON_PATH }}
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+
+    - name: Check Build Tree
+      uses: haya14busa/action-cond@v1
+      id: buildtree
+      with:
+        cond: ${{ github.event.inputs.MANIFEST_BRANCH == 'twrp-11' || github.event.inputs.MANIFEST_BRANCH == 'twrp-12.1' }}
+        if_true: twrp
+        if_false: omni
+
+    - name: Sync Device Dependencies
+      run: |
+        if [ -f "${GITHUB_WORKSPACE}/scripts/convert.sh" ]; then
+          bash ${GITHUB_WORKSPACE}/scripts/convert.sh ${{ github.event.inputs.DEVICE_PATH }}/${{ steps.buildtree.outputs.value }}.dependencies
+        fi
+        repo sync -c --no-tags -j4
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+      continue-on-error: true
+
+    - name: Set Swap Space
+      uses: pierotofy/set-swap-space@master
+      with:
+        swap-size-gb: 12
+
+    - name: Building recovery
+      run: |
+        rm -rf external/gflags
+        source build/envsetup.sh
+        export ALLOW_MISSING_DEPENDENCIES=true
+        export USE_CCACHE=1
+        export CCACHE_DIR=$HOME/.ccache
+        export CCACHE_EXEC=$(which ccache)
+        
+        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng 
+        make clean
+        # -j$(nproc - 2) leaves 2 cores for system overhead, preventing freezes
+        make ${{ github.event.inputs.BUILD_TARGET }}image -j$(($(nproc) - 2))
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+      timeout-minutes: 120
+
+    - name: Save ccache
+      # This step is CRITICAL for performance. It uploads the cache for the next run.
+      uses: actions/cache@v4
+      with:
+        path: ~/.ccache
+        key: ccache-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
+
+    - name: Calculate Hashes
+      id: hashes
+      run: |
+        cd workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/
+        
+        # Determine output image name
+        TARGET=${{ github.event.inputs.BUILD_TARGET }}
+        if [ "$TARGET" == "vendorboot" ]; then
+          IMG_NAME="vendor_boot.img"
+        elif [ "$TARGET" == "boot" ]; then
+          IMG_NAME="boot.img"
+        elif [ "$TARGET" == "recovery" ]; then
+          IMG_NAME="recovery.img"
+        else
+          IMG_NAME="${TARGET}.img"
+        fi
+
+        if [ ! -f "$IMG_NAME" ]; then
+          echo "Error: Expected image $IMG_NAME not found!"
+          ls -lah
+          exit 1
+        fi
+        
+        SHA256=$(sha256sum $IMG_NAME | awk '{print $1}')
+        echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+        echo "$SHA256  $IMG_NAME" > $IMG_NAME.sha256
+        
+        MD5=$(md5sum $IMG_NAME | awk '{print $1}')
+        echo "md5=$MD5" >> $GITHUB_OUTPUT
+        echo "$MD5  $IMG_NAME" > $IMG_NAME.md5
+        
+        echo "file_name=$IMG_NAME" >> $GITHUB_OUTPUT
+
+    - name: Upload to Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: | 
+          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ steps.hashes.outputs.file_name }}
+          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.sha256
+          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.md5
+        name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
+        tag_name: ${{ github.run_id }}
+        body: |
+          ## Recovery Image for ${{ github.event.inputs.DEVICE_NAME }}
+          
+          | Component | Details |
+          | :--- | :--- |
+          | **Maintainer** | @${{ github.actor }} |
+          | **Device** | ${{ github.event.inputs.DEVICE_NAME }} |
+          | **Manifest** | ${{ github.event.inputs.MANIFEST_BRANCH }} |
+          | **Target** | ${{ steps.hashes.outputs.file_name }} |
+          
+          ---
+          
+          ### 📝 Flash Instructions
+          1. Download `${{ steps.hashes.outputs.file_name }}`.
+          2. Reboot to Fastboot Mode.
+          3. Flash the image:
+             ```bash
+             fastboot flash ${{ github.event.inputs.BUILD_TARGET }} ${{ steps.hashes.outputs.file_name }}
+             fastboot reboot
+             ```
+          
+          ---
+          
+          ### 🔒 Checksums
+          
+          **SHA256**
+          ```
+          ${{ steps.hashes.outputs.sha256 }}
+          ```
+          
+          **MD5**
+          ```
+          ${{ steps.hashes.outputs.md5 }}
+          ```
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
