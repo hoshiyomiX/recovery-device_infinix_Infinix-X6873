@@ -120,14 +120,16 @@ TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 BOARD_VNDK_VERSION := current
 
 # Crypto - Keymint 3.0 (AIDL)
-TW_INCLUDE_CRYPTO          := true
-TW_INCLUDE_CRYPTO_FBE      := true
-TW_USE_FSCRYPT_POLICY      := 2
-TW_FORCE_KEYMASTER_VER     := true
-TW_INCLUDE_LIBFI2SCRYPT    := true
+# DISABLED: KeyMint V3 not supported from source for MediaTek + Trustonic TEE
+# TW_INCLUDE_CRYPTO          := true
+# TW_INCLUDE_CRYPTO_FBE      := true
+# TW_USE_FSCRYPT_POLICY      := 2
+# TW_FORCE_KEYMASTER_VER     := true
+# TW_INCLUDE_LIBFI2SCRYPT    := true
 
 # Keymint AIDL
-TARGET_KEYMINT_AIDL        := true
+# DISABLED: KeyMint V3 not supported from source
+# TARGET_KEYMINT_AIDL        := true
 
 PLATFORM_VERSION             := 99.87.36
 PLATFORM_VERSION_LAST_STABLE := $(PLATFORM_VERSION)
