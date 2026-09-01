@@ -103,7 +103,11 @@ service mtk.plpath.utils.link /system/bin/mtk_plpath_utils
     disabled
     seclabel u:r:recovery:s0
 
-# Gatekeeper Service (AIDL V1)
+# Gatekeeper Service (AIDL V1) — declared inline per X6728 template pattern.
+# The vendor/etc/init/android.hardware.gatekeeper-service.trustonic.rc file was
+# removed (it declared the same binary under a different service name
+# 'vendor.gatekeeper-default' with user=system and no seclabel, conflicting
+# with this inline declaration). X6728 keeps all Trustonic HAL services inline.
 service gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper-service.trustonic
     interface android.hardware.gatekeeper-V1::IGatekeeper default
     user root
@@ -111,7 +115,9 @@ service gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper-service.trusto
     disabled
     seclabel u:r:recovery:s0
 
-# Keymint Service (AIDL 3.0)
+# Keymint Service (AIDL 3.0) — declared inline per X6728 template pattern.
+# The vendor/etc/init/android.hardware.security.keymint@3.0-service.trustonic.rc
+# file was removed (same conflict reason as gatekeeper above).
 # Note: user=root required for TEE communication (was 'nobody' before — caused
 # KeyMint service to fail talking to mcDriverDaemon). X6728 uses root for all
 # Trustonic HAL services.
@@ -157,6 +163,19 @@ on property:crypto.ready=0
     stop gatekeeper-1-0
     stop keymint-3-0
 
+# Health HAL (AIDL — service declared inline here per X6728 template pattern.
+# Was previously only 'start vendor.health-default' with no declaration, making
+# the start call a no-op. Now the service is properly declared so the AIDL
+# health HAL actually runs in recovery (battery level reporting in TWRP UI).
+service vendor.health-default /system/bin/hw/android.hardware.health-service.example_recovery
+    class hal
+    user root
+    group root
+    capabilities WAKE_ALARM BLOCK_SUSPEND
+    file /dev/kmsg w
+    seclabel u:r:recovery:s0
+    override
+
 on post-fs-data
     mkdir /data/vendor_de 0770 system system
     mkdir /data/vendor_de/0 0770 system system
@@ -165,7 +184,6 @@ on post-fs-data
     # Start TEE daemon
     start mobicore
 
-    # Health HAL (AIDL — service declared in vendor/etc/init/ via PRODUCT_PACKAGES
-    # android.hardware.health-service.example_recovery; matches X6728 naming).
+    # Start Health HAL (now declared above)
     start vendor.health-default
     setprop sys.usb.config adb
