@@ -4,13 +4,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
+# BoardConfig template adapted from Andrikurn/twrp_device_infinix_X6728
+# Hardware values remain X6873-native (MT6897, UFS 4.0, armv8-2a, 1080x2400).
+#
 
 DEVICE_PATH := device/infinix/X6873
-
-# For building with minimal manifest
-ALLOW_MISSING_DEPENDENCIES                   := true
-BUILD_BROKEN_DUP_RULES                       := true
-BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
 # Architecture
 TARGET_ARCH                := arm64
@@ -29,6 +27,7 @@ TARGET_2ND_CPU_VARIANT_RUNTIME := cortex-a55
 
 TARGET_USES_64_BIT_BINDER := true
 
+# Power
 ENABLE_CPUSETS := true
 ENABLE_SCHEDBOOST := true
 
@@ -39,6 +38,13 @@ TARGET_OTA_ASSERT_DEVICE := Infinix-X6873,X6873
 TARGET_BOOTLOADER_BOARD_NAME := X6873
 TARGET_NO_BOOTLOADER         := true
 TARGET_USES_UEFI             := true
+
+# Build hacks
+ALLOW_MISSING_DEPENDENCIES                   := true
+BUILD_BROKEN_DUP_RULES                       := true
+BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+BUILD_BROKEN_NINJA_USES_ENV_VARS             += RTIC_MPGEN
+BUILD_BROKEN_PLUGIN_VALIDATION               := soong-libaosprecovery_defaults soong-libguitwrp_defaults soong-libminuitwrp_defaults soong-vold_defaults
 
 # DTBO
 BOARD_KERNEL_SEPARATED_DTBO := true
@@ -68,9 +74,14 @@ BOARD_MKBOOTIMG_ARGS += --dtb_offset $(BOARD_DTB_OFFSET)
 TARGET_PREBUILT_DTB  := $(DEVICE_PATH)/prebuilt/dtb.img
 BOARD_MKBOOTIMG_ARGS += --dtb $(TARGET_PREBUILT_DTB)
 
-# Debug
-TWRP_INCLUDE_LOGCAT := true
-TARGET_USES_LOGD    := true
+# AVB
+BOARD_AVB_ENABLE                           := true
+BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS           += --flags 3
+BOARD_AVB_ROLLBACK_INDEX                   := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_RECOVERY_ALGORITHM               := SHA256_RSA4096
+BOARD_AVB_RECOVERY_KEY_PATH                := external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_RECOVERY_ROLLBACK_INDEX          := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 1
 
 # Hardware
 BOARD_USES_MTK_HARDWARE := true
@@ -84,22 +95,34 @@ BOARD_SUPER_PARTITION_SIZE                    := 9126805504
 BOARD_SUPER_PARTITION_GROUPS                  := infinix_dynamic_partitions
 BOARD_INFINIX_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor product system_ext odm
 BOARD_INFINIX_DYNAMIC_PARTITIONS_SIZE         := 9122611200
+BOARD_USES_METADATA_PARTITION                 := true
+BOARD_ROOT_EXTRA_FOLDERS                      += metadata
 
-# Partitions - file type
-BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE     := ext4
-BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE      := ext4
-BOARD_SYSTEM_EXTIMAGE_FILE_SYSTEM_TYPE  := ext4
-BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE    := f2fs
-BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE      := ext4
-BOARD_ODMIMAGE_FILE_SYSTEM_TYPE         := ext4
-TARGET_USERIMAGES_USE_EXT4              := true
-TARGET_USERIMAGES_USE_F2FS              := true
+BOARD_INFINIX_DYNAMIC_PARTITIONS_PARTITION_LIST += \
+    product \
+    system \
+    system_ext \
+    vendor \
+    odm
 
-TARGET_COPY_OUT_PRODUCT                 := product
-TARGET_COPY_OUT_SYSTEM                  := system
-TARGET_COPY_OUT_SYSTEM_EXT              := system_ext
-TARGET_COPY_OUT_VENDOR                  := vendor
-TARGET_COPY_OUT_ODM                     := odm
+TARGET_COPY_OUT_ODM        := odm
+TARGET_COPY_OUT_PRODUCT    := product
+TARGET_COPY_OUT_SYSTEM     := system
+TARGET_COPY_OUT_SYSTEM_EXT := system_ext
+TARGET_COPY_OUT_VENDOR     := vendor
+
+# File systems
+TARGET_USERIMAGES_USE_F2FS := true
+TW_USE_DMCTL               := true
+
+BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE    := ext4
+BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE     := ext4
+BOARD_SYSTEM_EXTIMAGE_FILE_SYSTEM_TYPE := ext4
+BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE   := f2fs
+BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE     := ext4
+BOARD_ODMIMAGE_FILE_SYSTEM_TYPE        := ext4
+TARGET_USERIMAGES_USE_EXT4             := true
+TARGET_USERIMAGES_USE_F2FS             := true
 
 # Platform
 TARGET_BOARD_PLATFORM := mt6897
@@ -110,8 +133,15 @@ BOARD_SUPPRESS_SECURE_ERASE     := true
 BOARD_USES_GENERIC_KERNEL_IMAGE := true
 BOARD_HAS_NO_SELECT_BUTTON      := true
 TARGET_RECOVERY_PIXEL_FORMAT    := RGBX_8888
-BOARD_SUPPRESS_SECURE_ERASE     := true
 TARGET_RECOVERY_FSTAB           := $(DEVICE_PATH)/recovery/root/system/etc/recovery.fstab
+
+# No recovery partition
+TW_HAS_NO_RECOVERY_PARTITION := true
+
+# Vendor Boot
+BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE      := true
+BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT  := true
+BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT := true
 
 # Properties
 TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
@@ -120,7 +150,9 @@ TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 BOARD_VNDK_VERSION := current
 
 # Crypto - Keymint 3.0 (AIDL)
-# DISABLED: KeyMint V3 not supported from source for MediaTek + Trustonic TEE
+# DISABLED: KeyMint V3 not supported from source for MediaTek + Trustonic TEE.
+# Splash-logo stuck issue when entering custom recovery. Do NOT re-enable until
+# upstream TWRP/OrangeFox lands stable KeyMint V3 + Trustonic support.
 TW_INCLUDE_CRYPTO          := false
 TW_INCLUDE_CRYPTO_FBE      := false
 # TW_USE_FSCRYPT_POLICY      := 2
@@ -131,48 +163,58 @@ TW_INCLUDE_CRYPTO_FBE      := false
 # DISABLED: KeyMint V3 not supported from source
 # TARGET_KEYMINT_AIDL        := true
 
+# Hack
+PLATFORM_SECURITY_PATCH      := 2099-12-31
 PLATFORM_VERSION             := 99.87.36
 PLATFORM_VERSION_LAST_STABLE := $(PLATFORM_VERSION)
-PLATFORM_SECURITY_PATCH      := 2099-12-31
 VENDOR_SECURITY_PATCH        := $(PLATFORM_SECURITY_PATCH)
 BOOT_SECURITY_PATCH          := $(PLATFORM_SECURITY_PATCH)
 
-# Verified Boot
-BOARD_AVB_ENABLE                           := true
-BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS           += --flags 3
-BOARD_AVB_ROLLBACK_INDEX                   := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
-BOARD_AVB_RECOVERY_ALGORITHM               := SHA256_RSA4096
-BOARD_AVB_RECOVERY_KEY_PATH                := external/avb/test/data/testkey_rsa4096.pem
-BOARD_AVB_RECOVERY_ROLLBACK_INDEX          := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
-BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 1
+# Tools
+TW_INCLUDE_FB2PNG       := true
+TW_ENABLE_ALL_PARTITION_TOOLS := true
+TW_INCLUDE_7ZA          := true
+TW_INCLUDE_REPACKTOOLS  := true
+TW_INCLUDE_RESETPROP    := true
+TW_INCLUDE_LIBRESETPROP := true
+TW_INCLUDE_LPTOOLS      := true
+TW_INCLUDE_ZSTD         := true
+TW_EXCLUDE_LPDUMP       := true
+TW_EXCLUDE_APEX         := true
 
-# Screen
-TARGET_SCREEN_WIDTH   := 1080
-TARGET_SCREEN_HEIGHT  := 2400
-TARGET_SCREEN_DENSITY := 480
+# TWRP file system
+RECOVERY_SDCARD_ON_DATA     := true
+TARGET_USES_MKE2FS          := true
+TW_ENABLE_FS_COMPRESSION    := true
+TW_INCLUDE_FUSE_EXFAT       := true
+TW_INCLUDE_FUSE_NTFS        := true
+TW_INCLUDE_NTFS_3G          := true
+TW_NO_EXFAT_FUSE            := true
 
-# TWRP Configuration
-TW_EXTRA_LANGUAGES    := true
-TARGET_USES_MKE2FS    := true
+# Debug
+TARGET_USES_LOGD := true
+TWRP_INCLUDE_LOGCAT := true
+TARGET_RECOVERY_DEVICE_MODULES += debuggerd
+RECOVERY_BINARY_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/debuggerd
+TARGET_RECOVERY_DEVICE_MODULES += strace
+RECOVERY_BINARY_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/strace
 
-TW_FRAMERATE          := 120
+# Fastbootd
+TW_INCLUDE_FASTBOOTD := true
+
+# TWRP Configs
 TW_BRIGHTNESS_PATH    := "/sys/class/leds/lcd-backlight/brightness"
 TW_MAX_BRIGHTNESS     := 2047
 TW_DEFAULT_BRIGHTNESS := 1200
 TW_NO_SCREEN_BLANK    := true
-
-# Tools
-TW_INCLUDE_FB2PNG       := true
-TW_INCLUDE_NTFS_3G      := true
-TW_INCLUDE_REPACKTOOLS  := true
-TW_INCLUDE_LIBRESETPROP := true
-TW_INCLUDE_RESETPROP    := true
-TW_INCLUDE_LPTOOLS      := true
-TW_EXCLUDE_LPDUMP       := true
-TW_EXCLUDE_APEX         := true
-
-# no recovery partition
-TW_HAS_NO_RECOVERY_PARTITION := true
+TW_EXTRA_LANGUAGES    := true
+TW_FRAMERATE          := 120
+TW_THEME              := portrait_hdpi
+TW_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID := true
+TW_NO_NETWORK         := true
+TW_LOAD_VENDOR_BOOT_MODULES := true
+TW_USB_STORAGE       := true
+TW_EXCLUDE_DEFAULT_USB_INIT := true
 
 # StatusBar
 TW_STATUS_ICONS_ALIGN := center
@@ -180,25 +222,14 @@ TW_CUSTOM_CPU_POS     := "300"
 TW_CUSTOM_CLOCK_POS   := "70"
 TW_CUSTOM_BATTERY_POS := "790"
 
-# FastbootD
-TW_INCLUDE_FASTBOOTD := true
-
-# USB Configuration
-TW_EXCLUDE_DEFAULT_USB_INIT := true
-
-# USB OTG
-TW_USB_STORAGE := true
-
-# Vendor Boot
-BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE     := true
-BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true
+# Display
+TARGET_SCREEN_WIDTH   := 1080
+TARGET_SCREEN_HEIGHT  := 2400
+TARGET_SCREEN_DENSITY := 480
 
 # Init
 TARGET_INIT_VENDOR_LIB         := libinit_X6873
 TARGET_RECOVERY_DEVICE_MODULES := libinit_X6873
 
-# Vendor Modules
-TW_LOAD_VENDOR_BOOT_MODULES := true
-
-# Version
+# TWRP Version
 TW_DEVICE_VERSION := Infinix GT 30 Pro | X6873

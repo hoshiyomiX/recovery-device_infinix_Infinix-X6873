@@ -39,9 +39,11 @@ Works:
 
 > **⚠️ WARNING: This recovery tree is a WORK IN PROGRESS port and may not work as intended!**
 
-- **Different Tree Structure**: This recovery tree structure is completely different from the original [recovery-device_infinix_Infinix-X6873](https://github.com/idabgsram/recovery-device_infinix_Infinix-X6873). It was ported from [tecno_LH8n-TWRP](https://github.com/naden01/tecno_LH8n-TWRP) and may potentially not work as intended compared to the original.
+- **Template Base**: This recovery tree structure was ported from [Andrikurn/twrp_device_infinix_X6728](https://github.com/Andrikurn/twrp_device_infinix_X6728) and adapted for X6873 hardware (MT6897, UFS 4.0). The X6728 tree provides the TWRP template scaffolding (cgroup infrastructure, VINTF compatibility matrices, fstab.postinstall, patch system, vendorsetup auto-patcher).
 
-- **Outdated Blobs**: The blobs used in this recovery tree are outdated, extracted from firmware dump `X6873-15.0.3.116SP01(0P001PF001AZ)`. You can find the firmware dump at [rama-firmware-dumps/Infinix-X6873](https://gitgud.io/rama-firmware-dumps/infinix/Infinix-X6873).
+- **Original Reference**: The previous structure was ported from [tecno_LH8n-TWRP](https://github.com/naden01/tecno_LH8n-TWRP). Some files (init.recovery.mt6897.rc, init.custom.rc, fstab.mt6897) still reflect that heritage.
+
+- **Outdated Blobs**: The blobs used in this recovery tree are extracted from firmware dump `X6873-15.0.3.116SP01(0P001PF001AZ)`. Supplementary blobs (paytrigger HAL, tranlog libs, AIDL keystore2/keymint V4/secureclock/sharedsecret/health NDK, etc.) are fetched from the newer firmware dump [rama-firmware-dumps/Infinix-X6873](https://gitlab.com/rama-firmware-dumps/infinix/Infinix-X6873) at branch `X6873-16.2.0.150SP12(OP003PF001AZ)`. See `BLOB_MANIFEST.md` for the full list of fetched blobs.
 
 - **Decryption Disabled**: Decryption is temporarily disabled to avoid the splash logo stuck issue when entering custom recovery. This will be addressed in future updates.
 
@@ -78,6 +80,14 @@ The approach to bypass the splash screen and take manual logs is an engineering-
 
 As a developer/maintainer, you are at the forefront. Don't be surprised if references from other devices don't help much, because each vendor implements Google's KeyMint V3 standard with different security styles.
 
+## Patches Applied at Lunch
+
+The `vendorsetup.sh` script auto-applies the following patches from `patches/` against the AOSP workspace at lunch time (each is dry-run first, skipped if already applied or not applicable):
+
+1. **`01-patch-health-hal.patch`** — removes `vintf_fragments` from `android.hardware.health-service.example-defaults` in `hardware/interfaces/health/aidl/default/Android.bp`. Ported from X6728.
+2. **`02-patch-vibration-brightness.patch`** — adds a `/sys/class/leds/vibrator/brightness` fallback path in `bootable/recovery/twrpminui/events.cpp` for haptic feedback during TWRP UI interactions. Ported from X6728.
+3. **`0001-Change-haptics-activation-file-path.patch`** — adds a `VIBRATOR_CUSTOM_PATH` macro guard in `events.cpp` for device-specific haptics paths. Original X6873 patch, retained.
+
 ## Building
 ### TWRP, PBRP
 _Lunch_ command :
@@ -95,4 +105,6 @@ lunch twrp_X6873-eng && mka adbd vendorbootimage
 
 ## Credits
 
-- **A15 Porting Reference**: [naden01/tecno_LH8n-TWRP](https://github.com/naden01/tecno_LH8n-TWRP) - This recovery tree was ported using this repository as reference.
+- **Template Base**: [Andrikurn/twrp_device_infinix_X6728](https://github.com/Andrikurn/twrp_device_infinix_X6728) — TWRP device tree for Infinix HOT 60i (X6728). Used as the structural template for this X6873 port.
+- **A15 Porting Reference**: [naden01/tecno_LH8n-TWRP](https://github.com/naden01/tecno_LH8n-TWRP) — original structure of this tree was ported using this repository as reference.
+- **Firmware Blobs**: [rama-firmware-dumps/Infinix-X6873](https://gitlab.com/rama-firmware-dumps/infinix/Infinix-X6873) — supplementary Trustonic/Transsion/AIDL blobs fetched from firmware dump branch `X6873-16.2.0.150SP12(OP003PF001AZ)`.

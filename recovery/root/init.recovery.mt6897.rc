@@ -2,6 +2,7 @@
 # Keymint 3.0 + Gatekeeper AIDL + Trustonic TEE
 # Adapted from tecno_LH8n-TWRP reference
 
+import /init.cgroup.rc
 import /init.tee.rc
 import /init.custom.rc
 

@@ -4,6 +4,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
+# Product makefile template adapted from Andrikurn/twrp_device_infinix_X6728.
+# Inheritance kept as X6873-native (core_64_bit + full_base_telephony + gsi_keys)
+# because X6873 uses armv8-2a with 32-bit compat, not single-arch 64-bit-only.
+#
 
 # Inherit from those products. Most specific first.
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)

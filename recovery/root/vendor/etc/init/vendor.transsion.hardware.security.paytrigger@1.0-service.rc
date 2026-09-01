@@ -1,0 +1,10 @@
+on post-fs-data
+    mkdir /mnt/vendor/persist/paytrigger 0700 root system
+    chmod 0777 /mnt/vendor/persist/paytrigger
+    chmod 0777 /mnt/vendor/persist/paytrigger/hmac_key
+    chmod 0777 /mnt/vendor/persist/paytrigger/rsa_priv
+
+service paytrigger_hal_service /vendor/bin/hw/vendor.transsion.hardware.security.paytrigger@1.0-service
+        class hal
+        user system
+        group system

@@ -1,0 +1,234 @@
+{
+  "repo": "https://gitlab.com/rama-firmware-dumps/infinix/Infinix-X6873",
+  "branch": "X6873-16.2.0.150SP12(OP003PF001AZ)",
+  "total": 28,
+  "ok": 27,
+  "fail": 1,
+  "total_bytes": 1618342,
+  "entries": [
+    {
+      "src": "vendor/bin/hw/vendor.transsion.hardware.security.paytrigger@1.0-service",
+      "dst": "vendor/bin/hw/vendor.transsion.hardware.security.paytrigger@1.0-service",
+      "ok": true,
+      "size": 24160,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "vendor/lib64/libpaytrigger.trustonic.so",
+      "dst": "vendor/lib64/libpaytrigger.trustonic.so",
+      "ok": true,
+      "size": 18824,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "vendor/lib64/vendor.transsion.hardware.security.paytrigger-V1-ndk.so",
+      "dst": "vendor/lib64/vendor.transsion.hardware.security.paytrigger-V1-ndk.so",
+      "ok": true,
+      "size": 42008,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "vendor/lib64/libtneclient.so",
+      "dst": "vendor/lib64/libtneclient.so",
+      "ok": true,
+      "size": 24352,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "vendor/lib64/libtranlog.so",
+      "dst": "vendor/lib64/libtranlog.so",
+      "ok": true,
+      "size": 81968,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "vendor/lib64/vendor.transsion.hardware.tranlogconfig-V1-ndk.so",
+      "dst": "vendor/lib64/vendor.transsion.hardware.tranlogconfig-V1-ndk.so",
+      "ok": true,
+      "size": 46456,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "vendor/lib64/vendor.transsion.hardware.tranlog-V1-ndk.so",
+      "dst": "vendor/lib64/vendor.transsion.hardware.tranlog-V1-ndk.so",
+      "ok": true,
+      "size": 59224,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "vendor/etc/init/vendor.transsion.hardware.security.paytrigger@1.0-service.rc",
+      "dst": "vendor/etc/init/vendor.transsion.hardware.security.paytrigger@1.0-service.rc",
+      "ok": true,
+      "size": 394,
+      "elf": false,
+      "error": null
+    },
+    {
+      "src": "vendor/etc/vintf/manifest/vendor.transsion.hardware.security.paytrigger@1.0-service.xml",
+      "dst": "vendor/etc/vintf/manifest/vendor.transsion.hardware.security.paytrigger@1.0-service.xml",
+      "ok": true,
+      "size": 227,
+      "elf": false,
+      "error": null
+    },
+    {
+      "src": "vendor/etc/vintf/manifest/android.hardware.security.secureclock-service.trustonic.xml",
+      "dst": "vendor/etc/vintf/manifest/android.hardware.security.secureclock-service.trustonic.xml",
+      "ok": true,
+      "size": 191,
+      "elf": false,
+      "error": null
+    },
+    {
+      "src": "vendor/etc/vintf/manifest/android.hardware.security.sharedsecret-service.trustonic.xml",
+      "dst": "vendor/etc/vintf/manifest/android.hardware.security.sharedsecret-service.trustonic.xml",
+      "ok": true,
+      "size": 193,
+      "elf": false,
+      "error": null
+    },
+    {
+      "src": "vendor/etc/vintf/manifest/android.hardware.health-service.example.xml",
+      "dst": "vendor/etc/vintf/manifest/android.hardware.health-service.example.xml",
+      "ok": true,
+      "size": 201,
+      "elf": false,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/android.hardware.security.keymint-V4-ndk.so",
+      "dst": "system/lib64/android.hardware.security.keymint-V4-ndk.so",
+      "ok": false,
+      "size": 0,
+      "elf": false,
+      "error": "GitLab rate-limit (403) \u2014 non-critical: V3-ndk already present in tree"
+    },
+    {
+      "src": "system/system/lib64/android.hardware.security.rkp-V3-ndk.so",
+      "dst": "system/lib64/android.hardware.security.rkp-V3-ndk.so",
+      "ok": true,
+      "size": 85848,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/android.hardware.security.secureclock-V1-ndk.so",
+      "dst": "system/lib64/android.hardware.security.secureclock-V1-ndk.so",
+      "ok": true,
+      "size": 69056,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/android.hardware.security.sharedsecret-V1-ndk.so",
+      "dst": "system/lib64/android.hardware.security.sharedsecret-V1-ndk.so",
+      "ok": true,
+      "size": 85584,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/android.hardware.health-V1-ndk.so",
+      "dst": "system/lib64/android.hardware.health-V1-ndk.so",
+      "ok": true,
+      "size": 85472,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/android.hardware.health-V2-ndk.so",
+      "dst": "system/lib64/android.hardware.health-V2-ndk.so",
+      "ok": true,
+      "size": 85560,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/android.hardware.health-V4-ndk.so",
+      "dst": "system/lib64/android.hardware.health-V4-ndk.so",
+      "ok": true,
+      "size": 85672,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/android.system.keystore2-V1-cpp.so",
+      "dst": "system/lib64/android.system.keystore2-V1-cpp.so",
+      "ok": true,
+      "size": 119240,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/android.system.keystore2-V5-ndk.so",
+      "dst": "system/lib64/android.system.keystore2-V5-ndk.so",
+      "ok": true,
+      "size": 119344,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/libkeystore2_aaid.so",
+      "dst": "system/lib64/libkeystore2_aaid.so",
+      "ok": true,
+      "size": 35256,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/libkeystore2_apc_compat.so",
+      "dst": "system/lib64/libkeystore2_apc_compat.so",
+      "ok": true,
+      "size": 69320,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/libkeystore2_crypto.so",
+      "dst": "system/lib64/libkeystore2_crypto.so",
+      "ok": true,
+      "size": 37944,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/libkeystore-attestation-application-id.so",
+      "dst": "system/lib64/libkeystore-attestation-application-id.so",
+      "ok": true,
+      "size": 52040,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system/system/lib64/libkeyutils.so",
+      "dst": "system/lib64/libkeyutils.so",
+      "ok": true,
+      "size": 35152,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system_ext/lib64/libTeeClient.so",
+      "dst": "system_ext/lib64/libTeeClient.so",
+      "ok": true,
+      "size": 119408,
+      "elf": true,
+      "error": null
+    },
+    {
+      "src": "system_ext/lib64/libtrankeytask.so",
+      "dst": "system_ext/lib64/libtrankeytask.so",
+      "ok": true,
+      "size": 235248,
+      "elf": true,
+      "error": null
+    }
+  ]
+}
