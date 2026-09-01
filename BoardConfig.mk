@@ -149,18 +149,18 @@ TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 # Treble
 BOARD_VNDK_VERSION := current
 
-# Crypto - Keymint 3.0 (AIDL)
-# DISABLED: KeyMint V3 not supported from source for MediaTek + Trustonic TEE.
-# Splash-logo stuck issue when entering custom recovery. Do NOT re-enable until
-# upstream TWRP/OrangeFox lands stable KeyMint V3 + Trustonic support.
-TW_INCLUDE_CRYPTO          := false
-TW_INCLUDE_CRYPTO_FBE      := false
-# TW_USE_FSCRYPT_POLICY      := 2
-# TW_FORCE_KEYMASTER_VER     := true
-# TW_INCLUDE_LIBFI2SCRYPT    := true
+# Crypto - Keymint 3.0 (AIDL) + FBE
+# Re-enabled per X6728 template (Andrikurn/twrp_device_infinix_X6728) which has
+# working FBE decryption on the same MediaTek + Trustonic TEE family. If splash-
+# stuck recurs on X6873 specifically (mt6897 UFS vs X6728 mt6768 eMMC), the
+# previous disabled state can be restored by commenting out the 5 flags below.
+TW_INCLUDE_CRYPTO          := true
+TW_INCLUDE_CRYPTO_FBE      := true
+TW_USE_FSCRYPT_POLICY      := 2
+TW_FORCE_KEYMASTER_VER     := true
+TW_INCLUDE_OMAPI           := true
 
 # Keymint AIDL
-# DISABLED: KeyMint V3 not supported from source
 # TARGET_KEYMINT_AIDL        := true
 
 # Hack

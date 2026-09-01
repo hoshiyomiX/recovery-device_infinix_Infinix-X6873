@@ -112,21 +112,21 @@ service gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper-service.trusto
     seclabel u:r:recovery:s0
 
 # Keymint Service (AIDL 3.0)
+# Note: user=root required for TEE communication (was 'nobody' before — caused
+# KeyMint service to fail talking to mcDriverDaemon). X6728 uses root for all
+# Trustonic HAL services.
 service keymint-3-0 /vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustonic
     class early_hal
     interface android.hardware.security.keymint-V3::IKeymintDevice default
     interface android.hardware.security.secureclock-V1::ISecureClock default
     interface android.hardware.security.sharedsecret-V1::ISharedSecret default
-    user nobody
+    user root
+    group root
     seclabel u:r:recovery:s0
 
-# Trustonic TEE Service
-service tee-1-1 /vendor/bin/hw/vendor.trustonic.tee@1.1-service
-    class core
-    user root
-    group root system
-    disabled
-    seclabel u:r:recovery:s0
+# Trustonic TEE 1.1 service is declared in
+# vendor/etc/init/vendor.trustonic.tee@1.1-service.rc (auto-loaded by init).
+# No duplicate inline declaration here.
 
 on property:crypto.ready=1
     start keymint-3-0
@@ -135,6 +135,7 @@ on property:hwservicemanager.ready=true
     start mobicore
     start gatekeeper-1-0
     start keymint-3-0
+    start tee-1-1
 
 on property:ro.crypto.state=unsupported
     stop mobicore
@@ -163,6 +164,8 @@ on post-fs-data
 
     # Start TEE daemon
     start mobicore
-    
-    start health-hal-2-1
+
+    # Health HAL (AIDL — service declared in vendor/etc/init/ via PRODUCT_PACKAGES
+    # android.hardware.health-service.example_recovery; matches X6728 naming).
+    start vendor.health-default
     setprop sys.usb.config adb

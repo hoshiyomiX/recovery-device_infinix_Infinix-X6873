@@ -31,7 +31,7 @@ Works:
 - [ ] Flashing
 - [ ] MTP
 - [ ] Sideload
-- [ ] Decryption (temporary disabled)
+- [ ] Decryption (re-enabled per X6728 template — testing needed)
 - [ ] USB OTG
 - [ ] Vibrator
 
@@ -45,15 +45,15 @@ Works:
 
 - **Outdated Blobs**: The blobs used in this recovery tree are extracted from firmware dump `X6873-15.0.3.116SP01(0P001PF001AZ)`. Supplementary blobs (paytrigger HAL, tranlog libs, AIDL keystore2/keymint V4/secureclock/sharedsecret/health NDK, etc.) are fetched from the newer firmware dump [rama-firmware-dumps/Infinix-X6873](https://gitlab.com/rama-firmware-dumps/infinix/Infinix-X6873) at branch `X6873-16.2.0.150SP12(OP003PF001AZ)`. See `BLOB_MANIFEST.md` for the full list of fetched blobs.
 
-- **Decryption Disabled**: Decryption is temporarily disabled to avoid the splash logo stuck issue when entering custom recovery. This will be addressed in future updates.
+- **Decryption Re-enabled**: FBE crypto flags are now enabled (mirroring the X6728 template `Andrikurn/twrp_device_infinix_X6728`, which has working FBE decryption on the same MediaTek + Trustonic TEE family). Previously disabled due to splash-logo stuck issue; re-enabling per maintainer decision. If splash-stuck recurs on X6873 specifically (mt6897 UFS vs X6728 mt6768 eMMC), the disabled state can be restored by commenting out the 5 crypto flags in `BoardConfig.mk`.
 
 ## Technical Notes: KeyMint V3 Challenge
 
 ### Current State of FBE Decryption with KeyMint 3.0
 
-Unfortunately, the bitter reality in the custom recovery world today is that **no source tree (TWRP or OrangeFox) has universally and stably succeeded in upstreaming FBE decryption with KeyMint 3.0 (AIDL)**, especially for the MediaTek + Trustonic TEE combination.
+**Update (2026-09-01)**: FBE crypto is now **enabled** in this tree, mirroring the X6728 template which has demonstrated working FBE decryption on the same MediaTek + Trustonic TEE family. The original concern about KeyMint V3 + Trustonic not being supported from source appears to be device-specific rather than family-wide — the X6728 tree (Helio G81 + Trustonic) achieves working decryption, suggesting the issue was previously a config gap rather than a fundamental incompatibility.
 
-Currently, the stable and official TWRP branch (android-12.1) mostly caps at KeyMint 1.0/2.0 or Keymaster 4.1 capabilities. For Android 14 and 15 that enforce KeyMint V3 usage, the situation remains highly experimental.
+Historically, the bitter reality in the custom recovery world was that **no source tree (TWRP or OrangeFox) had universally and stably succeeded in upstreaming FBE decryption with KeyMint 3.0 (AIDL)**, especially for the MediaTek + Trustonic TEE combination. The X6728 tree challenges this assumption for the Infinix HOT 60i specifically.
 
 ### Progress is on Qualcomm (QCOM), Not MediaTek
 
