@@ -11,8 +11,9 @@ on init
     setprop sys.usb.controller "musb-hdrc"
     setprop sys.usb.ffs.aio_compat 0
     export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
+    symlink /system/etc/ /etc/
     setprop crypto.ready 1
-    
+
     # Set hardware properties for crypto HALs
     setprop ro.hardware.gatekeeper trustonic
     setprop ro.hardware.keymaster trustonic
@@ -134,8 +135,13 @@ service keymint-3-0 /vendor/bin/hw/android.hardware.security.keymint@3.0-service
 # vendor/etc/init/vendor.trustonic.tee@1.1-service.rc (auto-loaded by init).
 # No duplicate inline declaration here.
 
-on property:crypto.ready=1
+# Priority 2 fix: align with X6728 pattern — start gatekeeper/keymint only
+# after Trustonic TEE (mobicore) is ready, not on crypto.ready (which fires
+# too early, before mobicore is running).
+on property:ro.vendor.trustonic.ready=true
+    start gatekeeper-1-0
     start keymint-3-0
+    start tee-1-1
 
 on property:hwservicemanager.ready=true
     start mobicore
