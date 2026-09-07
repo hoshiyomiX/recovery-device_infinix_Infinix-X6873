@@ -133,6 +133,13 @@ service keymint-3-0 /vendor/bin/hw/android.hardware.security.keymint@3.0-service
 # vendor/etc/init/vendor.trustonic.tee@1.1-service.rc (auto-loaded by init).
 # No duplicate inline declaration here.
 
+# Start mobicore on encrypted dynamic-partitions devices.
+# This trigger matches fox_14.1 template pattern (init.recovery.mt6768.rc line 73-74).
+# Port also has 2 additional mobicore triggers below (hwservicemanager.ready + post-fs-data)
+# which provide redundancy — init deduplicates multiple start requests.
+on property:ro.crypto.state=encrypted && property:ro.boot.dynamic_partitions=true
+    start mobicore
+
 # Priority 2 fix: align with X6728 pattern — start gatekeeper/keymint only
 # after Trustonic TEE (mobicore) is ready, not on crypto.ready (which fires
 # too early, before mobicore is running).
