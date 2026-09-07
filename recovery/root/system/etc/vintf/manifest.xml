@@ -1,33 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     System VINTF Manifest for Infinix X6873 Recovery
+    Adapted from X6728 fox_14.1 template (framework-type manifest).
+    The previous version was type="device" and incorrectly declared vendor
+    HALs (keymint/secureclock/sharedsecret) and keystore2 as system HALs.
+    System manifests must be type="framework" and declare framework-provided
+    services only. Vendor HALs are declared in vendor/etc/vintf/ fragments.
 -->
-<manifest version="4.0" type="device">
-    <!-- Keystore2 Service -->
-    <hal format="aidl">
-        <name>android.system.keystore2</name>
-        <version>1</version>
-        <fqname>IKeystoreService/default</fqname>
+<manifest version="8.0" type="framework">
+    <hal format="hidl" max-level="6">
+        <name>android.frameworks.displayservice</name>
+        <transport>hwbinder</transport>
+        <fqname>@1.0::IDisplayService/default</fqname>
     </hal>
-
-    <!-- Keymint Service -->
-    <hal format="aidl">
-        <name>android.hardware.security.keymint</name>
-        <version>3</version>
-        <fqname>IKeyMintDevice/default</fqname>
+    <hal format="hidl" max-level="5">
+        <name>android.frameworks.schedulerservice</name>
+        <transport>hwbinder</transport>
+        <fqname>@1.0::ISchedulingPolicyService/default</fqname>
     </hal>
-
-    <!-- Secure Clock -->
     <hal format="aidl">
-        <name>android.hardware.security.secureclock</name>
-        <version>1</version>
-        <fqname>ISecureClock/default</fqname>
+        <name>android.frameworks.sensorservice</name>
+        <fqname>ISensorManager/default</fqname>
     </hal>
-
-    <!-- Shared Secret -->
-    <hal format="aidl">
-        <name>android.hardware.security.sharedsecret</name>
-        <version>1</version>
-        <fqname>ISharedSecret/default</fqname>
+    <hal format="hidl" max-level="8">
+        <name>android.frameworks.sensorservice</name>
+        <transport>hwbinder</transport>
+        <fqname>@1.0::ISensorManager/default</fqname>
     </hal>
 </manifest>

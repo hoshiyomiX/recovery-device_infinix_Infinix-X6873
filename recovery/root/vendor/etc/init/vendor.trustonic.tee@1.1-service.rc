@@ -1,4 +1,15 @@
+# Trustonic TEE 1.1 service — declared in vendor/etc/init/ (not inline in
+# init.recovery.mt6897.rc) because it is a firmware-provided service rc.
+# Added `disabled` + `seclabel u:r:recovery:s0` to match the pattern used
+# by all inline services in init.recovery.mt6897.rc (gatekeeper-1-0,
+# keymint-3-0, keystore2, vendor.health-default). Without `disabled`, the
+# service auto-starts on `class hal` trigger — before mobicore is ready —
+# causing a race condition where tee-1-1 fails to connect to the TEE.
+# Without `seclabel`, the service runs with vendor SELinux context instead
+# of recovery context, which may block TEE device access.
 service tee-1-1 /vendor/bin/hw/vendor.trustonic.tee@1.1-service
     class hal
     user system
     group system
+    disabled
+    seclabel u:r:recovery:s0

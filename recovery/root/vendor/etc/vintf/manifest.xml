@@ -1,42 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     VINTF Manifest for Infinix X6873 Recovery
-    Platform: MT6897 (Dimensity 8350 Ultimate)
-    TEE: Trustonic Kinibi with Keymint 3.0
+    Platform: MT6897 (Dimensity 8350)
+    TEE: Trustonic Kinibi with Keymint 3.0 (AIDL)
+
+    NOTE: This main manifest only declares HALs that are NOT in fragment
+    files under vendor/etc/vintf/manifest/. Fragment-declared HALs
+    (keymint, gatekeeper, secureclock, sharedsecret, health, boot,
+    paytrigger) must NOT be re-declared here — doing so causes VINTF
+    verification failures due to duplicate instance declarations.
+
+    Trustonic TEE/TUI are declared as HIDL (not AIDL) because the X6873
+    firmware ships HIDL 1.1/1.0 binaries (vendor.trustonic.tee@1.1-service
+    and vendor.trustonic.tee.tui@1.0.so). The X6728 template declares these
+    as AIDL, but that is vestigial — X6728 does not ship the binaries.
 -->
-<manifest version="4.0" type="device" target-level="8">
-    <!-- AIDL Keymint 3.0 -->
-    <hal format="aidl">
-        <name>android.hardware.security.keymint</name>
-        <version>3</version>
-        <fqname>IKeyMintDevice/default</fqname>
-    </hal>
-    <hal format="aidl">
-        <name>android.hardware.security.keymint</name>
-        <version>3</version>
-        <fqname>IRemotelyProvisionedComponent/default</fqname>
-    </hal>
-
-    <!-- AIDL Gatekeeper V1 -->
-    <hal format="aidl">
-        <name>android.hardware.gatekeeper</name>
-        <version>1</version>
-        <fqname>IGatekeeper/default</fqname>
-    </hal>
-
-    <!-- HIDL Keymaster 4.1 (for compatibility) -->
-    <hal format="hidl">
-        <name>android.hardware.keymaster</name>
-        <transport>hwbinder</transport>
-        <version>4.1</version>
-        <interface>
-            <name>IKeymasterDevice</name>
-            <instance>default</instance>
-        </interface>
-        <fqname>@4.1::IKeymasterDevice/default</fqname>
-    </hal>
-
-    <!-- Trustonic TEE -->
+<manifest version="8.0" type="device" target-level="8">
+    <!-- Trustonic TEE (HIDL 1.1 — binary: vendor.trustonic.tee@1.1-service) -->
     <hal format="hidl">
         <name>vendor.trustonic.tee</name>
         <transport>hwbinder</transport>
@@ -48,7 +28,7 @@
         <fqname>@1.1::ITee/default</fqname>
     </hal>
 
-    <!-- Trustonic TUI -->
+    <!-- Trustonic TUI (HIDL 1.0 — lib: vendor.trustonic.tee.tui@1.0.so) -->
     <hal format="hidl">
         <name>vendor.trustonic.tee.tui</name>
         <transport>hwbinder</transport>
@@ -58,20 +38,6 @@
             <instance>default</instance>
         </interface>
         <fqname>@1.0::ITui/default</fqname>
-    </hal>
-
-    <!-- Boot Control -->
-    <hal format="aidl">
-        <name>android.hardware.boot</name>
-        <version>1</version>
-        <fqname>IBootControl/default</fqname>
-    </hal>
-
-    <!-- Health HAL -->
-    <hal format="aidl">
-        <name>android.hardware.health</name>
-        <version>1</version>
-        <fqname>IHealth/default</fqname>
     </hal>
 
     <sepolicy>
