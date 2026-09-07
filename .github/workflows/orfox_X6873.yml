@@ -30,12 +30,12 @@ on:
       DEVICE_TREE_BRANCH:
         description: 'Device Tree Branch'
         required: true
-        default: 'revision'
+        default: 'porting'
         type: string
       DEVICE_PATH:
         description: 'Device Path'
         required: true
-        default: 'device/infinix/Infinix-X6873'
+        default: 'device/infinix/X6873'
         type: string
       COMMON_TREE_URL:
         description: 'Common Tree URL (optional)'
@@ -52,7 +52,7 @@ on:
       DEVICE_NAME:
         description: 'Device Codename (must match PRODUCT_DEVICE in device.mk)'
         required: true
-        default: 'Infinix-X6873'
+        default: 'X6873'
         type: string
       MAKEFILE_NAME:
         description: 'Makefile Name (for lunch command)'

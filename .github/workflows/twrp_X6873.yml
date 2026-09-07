@@ -10,7 +10,7 @@ on:
       MANIFEST_BRANCH:
         description: 'MANIFEST_BRANCH'
         required: true
-        default: 'twrp-12.1'
+        default: 'twrp-16.0'
       DEVICE_TREE_URL:
         description: 'DEVICE_TREE_URL'
         required: true
@@ -18,11 +18,11 @@ on:
       DEVICE_TREE_BRANCH:
         description: 'DEVICE_TREE_BRANCH'
         required: true
-        default: 'twrp-12.1'
+        default: 'porting'
       DEVICE_PATH:
         description: 'DEVICE_PATH'
         required: true
-        default: 'device/infinix/Infinix-X6873'
+        default: 'device/infinix/X6873'
       COMMON_TREE_URL:
         description: 'COMMON_TREE_URL'
         required: false
@@ -35,7 +35,7 @@ on:
       DEVICE_NAME:
         description: 'DEVICE_NAME (Output folder name)'
         required: true
-        default: 'Infinix-X6873'
+        default: 'X6873'
       MAKEFILE_NAME:
         description: 'MAKEFILE_NAME'
         required: true
@@ -72,7 +72,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
-        java-version: '11'
+        java-version: '17'
 
     - name: Setup SSH Keys
       if: ${{ startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com') || 
@@ -114,8 +114,8 @@ jobs:
         mkdir workspace
         cd workspace
         echo "workspace-folder=$(pwd)" >> $GITHUB_OUTPUT
-        git config --global user.name "excaliburXD"
-        git config --global user.email "eexcalibur32@gmail.com"
+        git config --global user.name "hoshiyomiX"
+        git config --global user.email "hoshiyomiX@users.noreply.github.com"
         git config --global color.ui false
         # Added --no-repo-verify to skip verification checks (faster)
         repo init --depth=1 --no-repo-verify -u ${{ github.event.inputs.MANIFEST_URL }} -b ${{ github.event.inputs.MANIFEST_BRANCH }}
@@ -149,7 +149,7 @@ jobs:
       uses: haya14busa/action-cond@v1
       id: buildtree
       with:
-        cond: ${{ github.event.inputs.MANIFEST_BRANCH == 'twrp-11' || github.event.inputs.MANIFEST_BRANCH == 'twrp-12.1' }}
+        cond: ${{ github.event.inputs.MANIFEST_BRANCH == 'twrp-11' || github.event.inputs.MANIFEST_BRANCH == 'twrp-12.1' || github.event.inputs.MANIFEST_BRANCH == 'twrp-16.0' }}
         if_true: twrp
         if_false: omni
 
