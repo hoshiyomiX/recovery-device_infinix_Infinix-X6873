@@ -60,14 +60,14 @@ on:
         default: 'twrp_X6873'
         type: string
       LUNCH_RELEASE:
-        description: 'Lunch Release Qualifier (A14+ requires 3-part format <product>-<release>-<variant>)'
+        description: 'Lunch Release Qualifier (A14+ requires 3-part format <product>-<release>-<variant>). NOTE: OrangeFox version ≠ AOSP version! fox_14.1=AOSP13→ap2a, fox_12.1=AOSP12→(empty), twrp-16.0=AOSP15→ap4a'
         required: true
-        default: 'ap3a'
+        default: 'ap2a'
         type: choice
         options:
           - ''        # legacy 2-part format (TWRP 12.1 / A12 and earlier)
-          - 'ap2a'    # Android 13 (API 33)
-          - 'ap3a'    # Android 14 (API 34) — for fox_14.1 manifest
+          - 'ap2a'    # Android 13 (API 33) — for fox_14.1 manifest (OrangeFox R14.1 is AOSP 13-based!)
+          - 'ap3a'    # Android 14 (API 34)
           - 'ap4a'    # Android 15 (API 35)
       BUILD_TARGET:
         description: 'Build Target'
@@ -549,9 +549,13 @@ jobs:
           fi
 
           # Lunch the device
-          # A14+ (fox_14.1 manifest) requires 3-part format: <product>-<release>-<variant>
+          # AOSP 13+ requires 3-part format: <product>-<release>-<variant>
           # Legacy 2-part format <product>-<variant> only works on A12 and earlier.
-          # LUNCH_RELEASE input controls the release qualifier (ap3a for A14, ap4a for A15).
+          # LUNCH_RELEASE input controls the release qualifier.
+          # NOTE: OrangeFox version ≠ AOSP version!
+          #   fox_12.1 = AOSP 12 → LUNCH_RELEASE=''  (legacy 2-part)
+          #   fox_14.1 = AOSP 13 → LUNCH_RELEASE='ap2a'  (DEFAULT)
+          #   twrp-16.0 = AOSP 15 → LUNCH_RELEASE='ap4a'
           echo ""
           echo "=== Lunching Device ==="
           LUNCH_RELEASE="${{ github.event.inputs.LUNCH_RELEASE }}"
