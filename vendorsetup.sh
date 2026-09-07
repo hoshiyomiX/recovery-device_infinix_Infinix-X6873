@@ -3,8 +3,8 @@
 # vendorsetup.sh — auto-patch helper for Infinix X6873 (MT6897) TWRP tree.
 #
 # Adapted from the X6728 (Andrikurn/twrp_device_infinix_X6728) template:
-#   - applies 01-patch-health-hal.patch     (AIDL health service vintf_fragments removal)
-#   - applies 02-patch-vibration-brightness.patch (LEDS vibrator brightness fallback)
+#   - applies 02-patch-health-hal.patch     (AIDL health service vintf_fragments removal)
+#   - applies 01-patch-vibration.patch (LEDS vibrator brightness fallback)
 #   - applies 0001-Change-haptics-activation-file-path.patch (VIBRATOR_CUSTOM_PATH guard)
 #
 # Each patch is applied with `patch -p1 -N` from the AOSP workspace root, with a
@@ -19,8 +19,8 @@ device_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 workspace_root="$(cd "${device_dir}/../../.." && pwd)"
 
 patches=(
-    "patches/01-patch-health-hal.patch"
-    "patches/02-patch-vibration-brightness.patch"
+    "patches/02-patch-health-hal.patch"
+    "patches/01-patch-vibration.patch"
     "patches/0001-Change-haptics-activation-file-path.patch"
 )
 
