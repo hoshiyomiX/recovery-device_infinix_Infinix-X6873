@@ -13,6 +13,7 @@ on init
     export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
     symlink /system/etc/ /etc/
     setprop crypto.ready 1
+    setprop ro.board.api_level 202404
 
     # Set hardware properties for crypto HALs
     setprop ro.hardware.gatekeeper trustonic
@@ -169,10 +170,19 @@ on property:crypto.ready=0
     stop gatekeeper-1-0
     stop keymint-3-0
 
+# Keystore2 Service (AIDL) — declared inline per fox_14.1 template pattern.
+# Without this declaration, keystore2 may not start properly in recovery,
+# breaking FBE decryption (keystore2 is the gateway between TWRP and keymint).
+service keystore2 /system/bin/keystore2 /tmp/misc/keystore
+    class early_hal
+    interface aidl android.system.keystore2.IKeystoreService/default
+    user root
+    group root keystore readproc log
+    writepid /dev/cpuset/foreground/tasks
+    seclabel u:r:recovery:s0
+    override
+
 # Health HAL (AIDL — service declared inline here per X6728 template pattern.
-# Was previously only 'start vendor.health-default' with no declaration, making
-# the start call a no-op. Now the service is properly declared so the AIDL
-# health HAL actually runs in recovery (battery level reporting in TWRP UI).
 service vendor.health-default /system/bin/hw/android.hardware.health-service.example_recovery
     class hal
     user root

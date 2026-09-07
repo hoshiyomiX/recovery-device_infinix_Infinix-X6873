@@ -4,7 +4,7 @@
     Platform: MT6897 (Dimensity 8350 Ultimate)
     TEE: Trustonic Kinibi with Keymint 3.0
 -->
-<manifest version="4.0" type="device" target-level="6">
+<manifest version="4.0" type="device" target-level="8">
     <!-- AIDL Keymint 3.0 -->
     <hal format="aidl">
         <name>android.hardware.security.keymint</name>
@@ -77,5 +77,5 @@
     <sepolicy>
         <version>35.0</version>
     </sepolicy>
-    <kernel target-level="6"/>
+    <kernel target-level="8"/>
 </manifest>

@@ -113,19 +113,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.system.keystore2
 
-# Keymaster (HIDL — backward compatibility)
-PRODUCT_PACKAGES += \
-    android.hardware.keymaster@4.1
-
-# Additional configs for Keymint AIDL
-TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += \
-    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.security.keymint-V3-ndk.so \
-    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.gatekeeper-V1-ndk.so
-
-TARGET_RECOVERY_DEVICE_MODULES += \
-    android.hardware.security.keymint-V3-ndk \
-    android.hardware.gatekeeper-V1-ndk
-
 # MTK plpath utils
 PRODUCT_PACKAGES += \
     mtk_plpath_utils \
