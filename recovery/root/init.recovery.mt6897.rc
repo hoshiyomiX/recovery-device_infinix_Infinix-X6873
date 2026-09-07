@@ -14,20 +14,19 @@ on init
     symlink /system/etc/ /etc/
     setprop crypto.ready 1
     setprop ro.board.api_level 202404
+    start boot-hal-1-2
 
     # Set hardware properties for crypto HALs
     setprop ro.hardware.gatekeeper trustonic
     setprop ro.hardware.keymaster trustonic
     setprop ro.hardware.keystore_keymint trustonic
 
-on fs && property:ro.debuggable=0
-    write /sys/class/udc/musb-hdrc/device/cmode 2
-    start adbd
-
 on fs
+    write /proc/bootprof "INIT:fs"
     install_keyring
     wait /dev/block/platform/soc/11270000.ufshci
     symlink /dev/block/platform/soc/11270000.ufshci /dev/block/bootdevice
+    start adbd
 
 # We need vold early for metadata encryption
 on early-fs
@@ -38,8 +37,6 @@ on late-fs
     mount_all /first_stage_ramdisk/fstab.mt6897 --late
 
 on post-fs
-    start boot-hal-1-2
-
     # Create necessary directories
     mkdir /mnt/vendor/persist 0771 system system
     

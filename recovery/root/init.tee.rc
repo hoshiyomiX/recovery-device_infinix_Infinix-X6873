@@ -44,12 +44,17 @@ on post-fs
 
     # Create mcRegistry to store failure record
     mkdir /mnt/vendor/persist/mcRegistry 0771 system system
+    mkdir /mnt/vendor/persist/mcRegistry/tee_logs 0771 system system
     mkdir /mnt/vendor/persist/keybox 0771 system system
 
-    # Anti-crack parameters
+    # Anti-crack parameters (Transsion security feature)
     mkdir /mnt/vendor/persist/startPara
     chown system system /mnt/vendor/persist/startPara
     chmod 0777 /mnt/vendor/persist/startPara
+    restorecon /tranfs
+    mkdir /tranfs/startPara 0700 system system
+    chown system system /tranfs/startPara
+    chmod 0777 /tranfs/startPara
 
     # Pay trigger directory
     mkdir /mnt/vendor/persist/paytrigger
@@ -59,6 +64,13 @@ on post-fs
 on post-fs-data
     # Create key provisioning directory
     mkdir /data/vendor/key_provisioning 0771 system system
+
+# Start mobicore on encrypted dynamic-partitions devices (template X6728 trigger)
+# This is a safety net — PORT also starts mobicore via 'on post-fs-data' in
+# init.recovery.mt6897.rc and 'on property:hwservicemanager.ready=true'.
+# Multiple start triggers are harmless (init deduplicates).
+on property:ro.crypto.state=encrypted && property:ro.boot.dynamic_partitions=true
+    start mobicore
 
 # For META/FACTORY mode (unencrypted)
 on property:ro.crypto.state=unsupported
