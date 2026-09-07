@@ -235,7 +235,49 @@ jobs:
           echo "workspace-folder=$(pwd)/workspace" >> $GITHUB_OUTPUT
 
       # --------------------------------------------------------
-      # Step 4: Setup ccache with symlink wrapper (RELIABLE for Android)
+      # Step 4: Prepare Build Environment (MUST run before ccache setup)
+      # Installs ccache + build deps via apt so that subsequent ccache
+      # configuration steps can find the `ccache` binary. Previous order
+      # had "Configure ccache" before apt install → "ccache: command not found".
+      # --------------------------------------------------------
+      - name: Prepare the build environment
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+        run: |
+          # IMPORTANT: Run apt update first to refresh package lists
+          echo "=== Updating package lists ==="
+          sudo apt-get update -qq
+
+          # Install only essential packages (no apt upgrade - saves time)
+          # ccache MUST be installed here so "Configure ccache" step can use it
+          echo "=== Installing build dependencies (including ccache) ==="
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -yq --no-install-recommends \
+              git python3 tar aria2 \
+              gperf gcc-multilib g++-multilib \
+              libc6-dev lib32ncurses-dev libx11-dev lib32z-dev libgl1-mesa-dev \
+              libxml2-utils xsltproc bc ccache lib32readline-dev lib32z1-dev \
+              liblz4-tool libncurses-dev libncurses5 libssl-dev \
+              libxml2 lzop pngcrush squashfs-tools imagemagick \
+              libbz2-dev lzma ncurses-dev texinfo yacc zip unzip \
+              flex bison build-essential git-lfs python3-pip \
+              libtinfo5 libtinfo-dev wget curl rsync \
+              zipalign openjdk-11-jdk-headless
+
+          # Verify ccache is now available
+          echo "=== Verifying ccache installation ==="
+          which ccache
+          ccache --version || echo "ccache version check failed"
+
+          # Clone OrangeFox setup scripts (shallow clone)
+          echo "=== Cloning OrangeFox scripts ==="
+          git clone --depth=1 https://gitlab.com/OrangeFox/misc/scripts
+          cd scripts
+          sudo bash setup/android_build_env.sh
+          sed -i 's/cd -/cd ../g' setup/install_android_sdk.sh
+          sudo bash setup/install_android_sdk.sh
+
+      # --------------------------------------------------------
+      # Step 5: Setup ccache with symlink wrapper (RELIABLE for Android)
+      # Now safe to run because ccache is installed in Step 4.
       # --------------------------------------------------------
       - name: Setup ccache
         if: github.event.inputs.CLEAN_BUILD != 'true'
@@ -252,14 +294,14 @@ jobs:
           # Create ccache directory
           sudo mkdir -p /home/runner/.ccache
           sudo chown -R runner:runner /home/runner/.ccache
-          
+
           # Configure ccache
           ccache --set-config=cache_dir=/home/runner/.ccache
           ccache --set-config=max_size=15G
           ccache --set-config=compression=true
           ccache --set-config=compression_level=6
           ccache --set-config=sloppiness=time_macros,include_file_mtime,include_file_ctime,file_macro,clang_index_store,pch_defines
-          
+
           # CRITICAL: Create symlinks so ccache intercepts compiler calls
           # This is the most reliable way to make Android build use ccache
           sudo mkdir -p /usr/local/ccache-bin
@@ -271,9 +313,9 @@ jobs:
           sudo ln -sf $(which ccache) /usr/local/ccache-bin/aarch64-linux-android-g++
           sudo ln -sf $(which ccache) /usr/local/ccache-bin/aarch64-linux-android-clang
           sudo ln -sf $(which ccache) /usr/local/ccache-bin/aarch64-linux-android-clang++
-          
+
           echo "/usr/local/ccache-bin" >> $GITHUB_PATH
-          
+
           # Verify configuration
           echo "=== Ccache Configuration ==="
           ccache -p | grep -E "cache_dir|max_size|compression|sloppiness"
@@ -281,13 +323,13 @@ jobs:
           echo "=== Ccache symlinks ==="
           ls -la /usr/local/ccache-bin/
           ccache -z
-          
+
           # Show cache size before build
           echo "=== Ccache directory before build ==="
           du -sh /home/runner/.ccache/ || echo "Empty cache"
 
       # --------------------------------------------------------
-      # Step 5: Cache OrangeFox manifest sources (saves ~4-5 min sync time)
+      # Step 6: Cache OrangeFox manifest sources (saves ~4-5 min sync time)
       # --------------------------------------------------------
       - name: Cache OrangeFox sources
         if: github.event.inputs.CLEAN_BUILD != 'true'
@@ -298,38 +340,6 @@ jobs:
           key: ofox-manifest-${{ github.event.inputs.MANIFEST_BRANCH }}-${{ hashFiles('.github/workflows/orfox_X6873.yml') }}
           restore-keys: |
             ofox-manifest-${{ github.event.inputs.MANIFEST_BRANCH }}-
-
-      # --------------------------------------------------------
-      # Step 6: Setup Build Environment (OPTIMIZED)
-      # --------------------------------------------------------
-      - name: Prepare the build environment
-        working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-        run: |
-          # IMPORTANT: Run apt update first to refresh package lists
-          echo "=== Updating package lists ==="
-          sudo apt-get update -qq
-
-          # Install only essential packages (no apt upgrade - saves time)
-          echo "=== Installing build dependencies ==="
-          DEBIAN_FRONTEND=noninteractive sudo apt-get install -yq --no-install-recommends \
-              git python3 tar aria2 \
-              gperf gcc-multilib g++-multilib \
-              libc6-dev lib32ncurses-dev libx11-dev lib32z-dev libgl1-mesa-dev \
-              libxml2-utils xsltproc bc ccache lib32readline-dev lib32z1-dev \
-              liblz4-tool libncurses-dev libncurses5 libssl-dev \
-              libxml2 lzop pngcrush squashfs-tools imagemagick \
-              libbz2-dev lzma ncurses-dev texinfo yacc zip unzip \
-              flex bison build-essential git-lfs python3-pip \
-              libtinfo5 libtinfo-dev wget curl rsync \
-              zipalign openjdk-11-jdk-headless
-
-          # Clone OrangeFox setup scripts (shallow clone)
-          echo "=== Cloning OrangeFox scripts ==="
-          git clone --depth=1 https://gitlab.com/OrangeFox/misc/scripts
-          cd scripts
-          sudo bash setup/android_build_env.sh
-          sed -i 's/cd -/cd ../g' setup/install_android_sdk.sh
-          sudo bash setup/install_android_sdk.sh
 
       # --------------------------------------------------------
       # Step 7: Configure Git
