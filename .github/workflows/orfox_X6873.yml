@@ -59,6 +59,16 @@ on:
         required: true
         default: 'twrp_X6873'
         type: string
+      LUNCH_RELEASE:
+        description: 'Lunch Release Qualifier (A14+ requires 3-part format <product>-<release>-<variant>)'
+        required: true
+        default: 'ap3a'
+        type: choice
+        options:
+          - ''        # legacy 2-part format (TWRP 12.1 / A12 and earlier)
+          - 'ap2a'    # Android 13 (API 33)
+          - 'ap3a'    # Android 14 (API 34) — for fox_14.1 manifest
+          - 'ap4a'    # Android 15 (API 35)
       BUILD_TARGET:
         description: 'Build Target'
         required: true
@@ -539,9 +549,19 @@ jobs:
           fi
 
           # Lunch the device
+          # A14+ (fox_14.1 manifest) requires 3-part format: <product>-<release>-<variant>
+          # Legacy 2-part format <product>-<variant> only works on A12 and earlier.
+          # LUNCH_RELEASE input controls the release qualifier (ap3a for A14, ap4a for A15).
           echo ""
           echo "=== Lunching Device ==="
-          lunch $MAKEFILE_NAME-$BUILD_TYPE
+          LUNCH_RELEASE="${{ github.event.inputs.LUNCH_RELEASE }}"
+          if [ -n "$LUNCH_RELEASE" ]; then
+            LUNCH_COMBO="$MAKEFILE_NAME-$LUNCH_RELEASE-$BUILD_TYPE"
+          else
+            LUNCH_COMBO="$MAKEFILE_NAME-$BUILD_TYPE"
+          fi
+          echo "Lunch combo: $LUNCH_COMBO"
+          lunch $LUNCH_COMBO
 
           # Display build environment
           echo ""
