@@ -1,10 +1,18 @@
 <!--
     Input:
         vendor/mediatek/proprietary/trustzone/trustonic/source/external/gatekeeper/common/aidl/android.hardware.gatekeeper-service.trustonic.xml
+
+    Verified against X6873 firmware (SP12):
+      Binary: android.hardware.gatekeeper-service.trustonic
+      NEEDED: libbinder_ndk.so → AIDL
+      AIDL lib: android.hardware.gatekeeper-V1-ndk.so → AIDL V1
+    Fragment matches firmware's android.hardware.gatekeeper-service.trustonic.xml
+    (which has <version>1</version>).
 -->
 <manifest version="8.0" type="device">
     <hal format="aidl">
         <name>android.hardware.gatekeeper</name>
+        <version>1</version>
         <fqname>IGatekeeper/default</fqname>
     </hal>
 </manifest>

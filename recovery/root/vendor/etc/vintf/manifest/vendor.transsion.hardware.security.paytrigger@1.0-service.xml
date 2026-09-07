@@ -1,10 +1,16 @@
 <!--
     Input:
         vendor/transsion/vnd_security/paytrigger/aidl/default/vendor.transsion.hardware.security.paytrigger@1.0-service.xml
+
+    Verified against X6873 firmware (SP12):
+      Binary: vendor.transsion.hardware.security.paytrigger@1.0-service
+      Fragment matches firmware's vendor.transsion.hardware.security.paytrigger@1.0-service.xml
+      (which has <version>1</version>).
 -->
 <manifest version="8.0" type="device">
     <hal format="aidl">
         <name>vendor.transsion.hardware.security.paytrigger</name>
+        <version>1</version>
         <fqname>IPayTrigger/default</fqname>
     </hal>
 </manifest>

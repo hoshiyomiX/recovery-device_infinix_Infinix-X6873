@@ -1,0 +1,19 @@
+<!--
+    Boot Control HAL — AIDL V1
+
+    Verified against X6873 firmware (SP12):
+      Binary: android.hardware.boot-service.mtk
+      NEEDED: libbinder_ndk.so → AIDL (NOT HIDL!)
+      AIDL lib: android.hardware.boot-V1-ndk.so → AIDL V1
+    Fragment matches firmware's android.hardware.boot-service.mtk.xml
+    (which uses AIDL format with fqname IBootControl/default).
+
+    Previous version declared HIDL @1.2 (inherited from fox_14.1 template)
+    but firmware binary is AIDL V1 — corrected to match firmware.
+-->
+<manifest version="8.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.boot</name>
+        <fqname>IBootControl/default</fqname>
+    </hal>
+</manifest>

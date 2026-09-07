@@ -1,11 +1,20 @@
 <!--
     Input:
         hardware/interfaces/health/aidl/default/android.hardware.health-service.example.xml
+
+    Verified against X6873 firmware (SP12):
+      Binary: android.hardware.health-service.example
+      NEEDED: libbinder_ndk.so → AIDL
+      AIDL lib: android.hardware.health-V2-ndk.so → AIDL V2 (NOT V3!)
+    Fragment matches firmware's android.hardware.health-service.example.xml
+    (which has <version>2</version>).
+    Previous version had <version>3</version> (inherited from fox_14.1 template)
+    but firmware binary is V2 — corrected to match firmware.
 -->
 <manifest version="8.0" type="device">
     <hal format="aidl">
         <name>android.hardware.health</name>
-        <version>3</version>
+        <version>2</version>
         <fqname>IHealth/default</fqname>
     </hal>
 </manifest>
