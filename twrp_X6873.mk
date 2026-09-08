@@ -4,26 +4,19 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# Product makefile template adapted from Andrikurn/twrp_device_infinix_X6728.
-# Inheritance kept as X6873-native (core_64_bit + full_base_telephony + gsi_keys)
-# because X6873 uses armv8-2a with 32-bit compat, not single-arch 64-bit-only.
+# Product makefile aligned with X6728 fox_14.1 template pattern.
+# Previous version inherited core_64_bit + full_base_telephony + gsi_keys +
+# emulated_storage from tecno_LH8n reference (AOSP 14-based), but OrangeFox
+# fox_14.1 is AOSP 13-based and does NOT have gsi_keys.mk or emulated_storage.mk.
+# Build #55 failed: "build/make/target/product/gsi_keys.mk does not exist"
+# Fix: remove all 4 AOSP 14+ inherit-product calls, match fox_14.1 minimal pattern.
 #
-
-# Inherit from those products. Most specific first.
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
-
-# Installs gsi keys into ramdisk, to boot a developer GSI with verified boot.
-$(call inherit-product, $(SRC_TARGET_DIR)/product/gsi_keys.mk)
-
-# Enable project quotas and casefolding for emulated storage without sdcardfs
-$(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
-
-# Inherit some common TWRP stuff.
-$(call inherit-product, vendor/twrp/config/common.mk)
 
 # Inherit from X6873 device
 $(call inherit-product, device/infinix/X6873/device.mk)
+
+# Inherit some common TWRP stuff.
+$(call inherit-product, vendor/twrp/config/common.mk)
 
 PRODUCT_DEVICE := X6873
 PRODUCT_NAME := twrp_X6873
