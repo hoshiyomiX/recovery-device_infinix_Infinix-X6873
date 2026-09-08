@@ -57,7 +57,7 @@ on:
       MAKEFILE_NAME:
         description: 'Makefile Name (for lunch command)'
         required: true
-        default: 'twrp_X6873'
+        default: 'fox_X6873'
         type: string
       LUNCH_RELEASE:
         description: 'Lunch Release Qualifier (A14+ requires 3-part format <product>-<release>-<variant>). NOTE: OrangeFox version ≠ AOSP version! fox_14.1=AOSP13→ap2a, fox_12.1=AOSP12→(empty), twrp-16.0=AOSP15→ap4a'

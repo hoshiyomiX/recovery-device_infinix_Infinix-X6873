@@ -113,7 +113,6 @@ TARGET_COPY_OUT_VENDOR     := vendor
 
 # File systems
 TARGET_USERIMAGES_USE_F2FS := true
-TW_USE_DMCTL               := true
 
 BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE    := ext4
 BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE     := ext4
@@ -135,9 +134,6 @@ BOARD_HAS_NO_SELECT_BUTTON      := true
 TARGET_RECOVERY_PIXEL_FORMAT    := RGBX_8888
 TARGET_RECOVERY_FSTAB           := $(DEVICE_PATH)/recovery/root/system/etc/recovery.fstab
 
-# No recovery partition
-TW_HAS_NO_RECOVERY_PARTITION := true
-
 # Vendor Boot
 BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE      := true
 BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT  := true
@@ -149,19 +145,6 @@ TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 # Treble
 BOARD_VNDK_VERSION := current
 
-# Crypto - Keymint 3.0 (AIDL) + FBE
-# Re-enabled per X6728 template (Andrikurn/twrp_device_infinix_X6728) which has
-# working FBE decryption on the same MediaTek + Trustonic TEE family. If splash-
-# stuck recurs on X6873 specifically (mt6897 UFS vs X6728 mt6768 eMMC), the
-# previous disabled state can be restored by commenting out the 5 flags below.
-TW_INCLUDE_CRYPTO          := true
-TW_INCLUDE_CRYPTO_FBE      := true
-TW_USE_FSCRYPT_POLICY      := 2
-TW_FORCE_KEYMASTER_VER     := true
-
-# Keymint AIDL
-# TARGET_KEYMINT_AIDL        := true
-
 # Hack
 PLATFORM_SECURITY_PATCH      := 2099-12-31
 PLATFORM_VERSION             := 99.87.36
@@ -169,57 +152,12 @@ PLATFORM_VERSION_LAST_STABLE := $(PLATFORM_VERSION)
 VENDOR_SECURITY_PATCH        := $(PLATFORM_SECURITY_PATCH)
 BOOT_SECURITY_PATCH          := $(PLATFORM_SECURITY_PATCH)
 
-# Tools
-TW_INCLUDE_FB2PNG       := true
-TW_ENABLE_ALL_PARTITION_TOOLS := true
-TW_INCLUDE_7ZA          := true
-TW_INCLUDE_REPACKTOOLS  := true
-TW_INCLUDE_RESETPROP    := true
-TW_INCLUDE_LIBRESETPROP := true
-TW_INCLUDE_LPTOOLS      := true
-TW_INCLUDE_ZSTD         := true
-TW_EXCLUDE_LPDUMP       := true
-TW_EXCLUDE_APEX         := true
-
-# TWRP file system
-RECOVERY_SDCARD_ON_DATA     := true
-TARGET_USES_MKE2FS          := true
-TW_ENABLE_FS_COMPRESSION    := true
-TW_INCLUDE_FUSE_EXFAT       := true
-TW_INCLUDE_FUSE_NTFS        := true
-TW_INCLUDE_NTFS_3G          := true
-TW_NO_EXFAT_FUSE            := true
-
 # Debug
 TARGET_USES_LOGD := true
-TWRP_INCLUDE_LOGCAT := true
 TARGET_RECOVERY_DEVICE_MODULES += debuggerd
 RECOVERY_BINARY_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/debuggerd
 TARGET_RECOVERY_DEVICE_MODULES += strace
 RECOVERY_BINARY_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/strace
-
-# Fastbootd
-TW_INCLUDE_FASTBOOTD := true
-
-# TWRP Configs
-TW_BRIGHTNESS_PATH    := "/sys/class/leds/lcd-backlight/brightness"
-TW_MAX_BRIGHTNESS     := 2047
-TW_DEFAULT_BRIGHTNESS := 1200
-TW_NO_SCREEN_BLANK    := true
-TW_EXTRA_LANGUAGES    := true
-TW_FRAMERATE          := 120
-TW_THEME              := portrait_hdpi
-TW_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID := true
-TW_NO_NETWORK         := true
-TW_LOAD_VENDOR_BOOT_MODULES := true
-TW_USB_STORAGE       := true
-TW_EXCLUDE_DEFAULT_USB_INIT := true
-
-# StatusBar
-TW_STATUS_ICONS_ALIGN := center
-TW_CUSTOM_CPU_POS     := "300"
-TW_CUSTOM_CLOCK_POS   := "70"
-TW_CUSTOM_BATTERY_POS := "790"
 
 # Display
 TARGET_SCREEN_WIDTH   := 1080
@@ -230,5 +168,6 @@ TARGET_SCREEN_DENSITY := 480
 TARGET_INIT_VENDOR_LIB         := libinit_X6873
 TARGET_RECOVERY_DEVICE_MODULES := libinit_X6873
 
-# TWRP Version
-TW_DEVICE_VERSION := Infinix GT 30 Pro | X6873
+# NOTE: All TW_* and OF_* flags have been moved to twrp.mk and fox.mk
+# respectively, per fox_14.1 template structure. See device/infinix/X6873/twrp.mk
+# for TWRP config and device/infinix/X6873/fox.mk for OrangeFox config.

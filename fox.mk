@@ -1,0 +1,26 @@
+# UI Related
+OF_SCREEN_H := 2400
+OF_STATUS_INDENT_LEFT := 48
+OF_STATUS_INDENT_RIGHT := 48
+OF_CLOCK_POS := 1
+OF_ALLOW_DISABLE_NAVBAR := 0
+
+# Partition tools
+OF_ENABLE_ALL_PARTITION_TOOLS := 1
+
+# Casefolding
+OF_FORCE_CASEFOLDING := 1
+
+# Keymaster
+OF_DEFAULT_KEYMASTER_VERSION := 4.1
+
+# Additional configs
+OF_SUPPORT_VBMETA_AVB2_PATCHING := 1
+OF_FORCE_PREBUILT_KERNEL := 1
+OF_USE_GREEN_LED := 0
+
+# Disable flashlight.
+# (The device uses ioctl call to /dev/flashlight instead of traditional sysfs write.)
+OF_FLASHLIGHT_ENABLE := 0
+
+OF_MAINTAINER := hoshiyomiX
