@@ -12,9 +12,8 @@
 # Configure base.mk
 $(call inherit-product, $(SRC_TARGET_DIR)/product/base.mk)
 
-# Configure core_64_bit_only.mk — kept off because X6873 needs 32-bit compat
-# (armv8-2a + TARGET_2ND_ARCH). Use core_64_bit.mk via twrp_X6873.mk instead.
-# $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
+# Configure core_64_bit_only.mk (per fox_14.1 template — 64-bit only recovery)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
 
 # Configure emulated_storage.mk
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
