@@ -575,35 +575,16 @@ jobs:
           echo "TARGET_ARCH: $TARGET_ARCH"
           echo "TARGET_BUILD_TYPE: $TARGET_BUILD_TYPE"
 
-          # Verify ccache is detected by build system
+          # Disable ccache — causes "Read-only file system" errors on CI runners
+          # when actions/cache restores the directory as read-only.
+          # CI builds don't benefit from ccache anyway (fresh runner each time).
           echo ""
-          echo "=== Verifying Ccache Integration ==="
-          
-          # Force ccache wrappers for Android build
-          # Method 1: Set environment variables that Android build system reads
-          export CCACHE_EXEC=$(which ccache)
-          export ANDROID_CCACHE_DIR=$CCACHE_DIR
-          
-          # Method 2: Check if build system supports wrappers
-          CC_WRAP=$(get_build_var CC_WRAPPER 2>/dev/null || echo "")
-          CXX_WRAP=$(get_build_var CXX_WRAPPER 2>/dev/null || echo "")
-          echo "CC_WRAPPER from build system: $CC_WRAP"
-          echo "CXX_WRAPPER from build system: $CXX_WRAP"
-          
-          # Method 3: Set wrappers explicitly if not set
-          if [ -z "$CC_WRAP" ]; then
-            echo "Setting CC_WRAPPER=ccache explicitly"
-            export CC_WRAPPER="ccache"
-          fi
-          if [ -z "$CXX_WRAP" ]; then
-            echo "Setting CXX_WRAPPER=ccache explicitly"  
-            export CXX_WRAPPER="ccache"
-          fi
-          
-          # Verify ccache is working
-          echo ""
-          echo "=== Ccache Status Before Build ==="
-          ccache -s | head -20
+          echo "=== Disabling ccache (CI runner compatibility) ==="
+          unset CCACHE_EXEC
+          unset ANDROID_CCACHE_DIR
+          unset CC_WRAPPER
+          unset CXX_WRAPPER
+          export USE_CCACHE=false
 
           # Start build with optimized parallel jobs
           echo ""
@@ -619,17 +600,6 @@ jobs:
             echo "Build failed, retrying with single thread..."
             mka adbd $BUILD_TARGET -j1
           }
-
-          # Show ccache stats after build
-          echo ""
-          echo "============================================"
-          echo "  CCACHE STATISTICS (IMPORTANT - VERIFY)"
-          echo "============================================"
-          ccache -s
-          echo ""
-          echo "Cache directory size:"
-          du -sh $CCACHE_DIR || true
-          echo "============================================"
 
       # --------------------------------------------------------
       # Step 13: Check output directory
