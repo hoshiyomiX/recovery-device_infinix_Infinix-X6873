@@ -23,10 +23,10 @@ ENABLE_VIRTUAL_AB := true
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/launch_with_vendor_ramdisk.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/compression.mk)
 
-# Shipping API level
-BOARD_SHIPPING_API_LEVEL    := 35
-PRODUCT_SHIPPING_API_LEVEL  := 35
-PRODUCT_TARGET_VNDK_VERSION := 35
+# Shipping API level (must match AOSP 13 build tree — fox_14.1 uses 34)
+BOARD_SHIPPING_API_LEVEL    := 34
+PRODUCT_SHIPPING_API_LEVEL  := 34
+PRODUCT_TARGET_VNDK_VERSION := 34
 
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
@@ -127,8 +127,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES_DEBUG += \
     update_engine_client
 
-# VNDK
-PRODUCT_TARGET_VNDK_VERSION := 35
+# VNDK (must match AOSP 13 build tree)
+PRODUCT_TARGET_VNDK_VERSION := 34
 
-# API
-PRODUCT_SHIPPING_API_LEVEL := 35
+# API (must match AOSP 13 build tree)
+PRODUCT_SHIPPING_API_LEVEL := 34
