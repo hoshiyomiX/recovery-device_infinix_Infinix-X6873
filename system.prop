@@ -11,6 +11,7 @@ ro.crypto.dm_default_options=default_options
 
 # Gatekeeper (AIDL)
 ro.hardware.gatekeeper=trustonic
+ro.hardware.kmsetkey=trustonic
 
 # Keymint (AIDL)
 ro.hardware.keystore_keymint=trustonic
