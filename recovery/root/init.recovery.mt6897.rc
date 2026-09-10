@@ -4,7 +4,6 @@
 
 import /init.cgroup.rc
 import /init.tee.rc
-import /init.custom.rc
 
 on init
     setprop sys.usb.configfs 1

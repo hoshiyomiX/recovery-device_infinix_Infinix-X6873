@@ -60,9 +60,3 @@ void vendor_load_properties()
     // Keymint version
     property_override("keymaster_ver", "4.1");
 }
-
-int main()
-{
-    vendor_load_properties();
-    return 0;
-}
