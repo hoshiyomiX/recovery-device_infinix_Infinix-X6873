@@ -25,6 +25,21 @@ on fs
     install_keyring
     wait /dev/block/platform/soc/11270000.ufshci
     symlink /dev/block/platform/soc/11270000.ufshci /dev/block/bootdevice
+
+    # Minimal configfs setup for adbd — ensures ADB is available even if
+    # decryption fails and mount_all blocks in 'on late-fs'. Without this,
+    # configfs setup (in init.recovery.usb.rc 'on post-fs') never runs if
+    # mount_all blocks, leaving adbd with no /dev/usb-ffs/adb endpoint.
+    # Full gadget config (bcdDevice, serialnumber, configs/b.1, ffs.fastboot,
+    # ffs.mtp, mass_storage) stays in init.recovery.usb.rc 'on post-fs'.
+    mkdir /config
+    mount configfs none /config
+    mkdir /config/usb_gadget/g1 0770 shell shell
+    mkdir /config/usb_gadget/g1/functions/ffs.adb
+    mkdir /dev/usb-ffs 0775 shell shell
+    mkdir /dev/usb-ffs/adb 0770 shell shell
+    mount functionfs adb /dev/usb-ffs/adb rmode=0770,fmode=0660,uid=2000,gid=2000,no_disconnect=1
+
     start adbd
 
 # We need vold early for metadata encryption
